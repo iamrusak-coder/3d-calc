@@ -7,117 +7,206 @@
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         :root {
-            --bg: var(--tg-theme-bg-color, #ffffff);
-            --text: var(--tg-theme-text-color, #000000);
-            --button: var(--tg-theme-button-color, #2481cc);
-            --button-text: var(--tg-theme-button-text-color, #ffffff);
-            --secondary-bg: var(--tg-theme-secondary-bg-color, #f0f0f0);
+            --bg: rgba(255,255,255,0.4);
+            --text: #1c1c1e;
+            --button: #007aff;
+            --button-text: #ffffff;
+            --glass: rgba(255,255,255,0.6);
+            --glass-strong: rgba(255,255,255,0.75);
+            --border: rgba(255,255,255,0.5);
+            --shadow: 0 8px 32px rgba(0,0,0,0.08);
+            --radius: 20px;
+        }
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg: rgba(28,28,30,0.5);
+                --text: #f5f5f7;
+                --glass: rgba(255,255,255,0.12);
+                --glass-strong: rgba(255,255,255,0.18);
+                --border: rgba(255,255,255,0.2);
+                --shadow: 0 8px 32px rgba(0,0,0,0.4);
+            }
         }
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: var(--bg);
+            background: transparent;
             color: var(--text);
-            padding: 16px;
             min-height: 100vh;
+            padding: 16px;
             transition: background 0.3s, color 0.3s;
         }
-        .container { max-width: 500px; margin: 0 auto; }
-        h2 { text-align: center; margin-bottom: 20px; font-size: 1.5em; }
+        .background {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--bg);
+            backdrop-filter: blur(30px);
+            -webkit-backdrop-filter: blur(30px);
+            z-index: -1;
+        }
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+            background: var(--glass);
+            border-radius: 32px;
+            padding: 24px 20px;
+            backdrop-filter: blur(30px);
+            -webkit-backdrop-filter: blur(30px);
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow);
+        }
+        h2 { text-align: center; margin-bottom: 24px; font-size: 1.6em; font-weight: 700; }
         .tabs {
-            display: flex; gap: 4px; margin-bottom: 20px;
-            border-bottom: 2px solid var(--secondary-bg); flex-wrap: wrap;
+            display: flex; gap: 4px; margin-bottom: 24px;
+            border-bottom: 2px solid var(--border); flex-wrap: wrap;
         }
         .tab {
-            flex: 1 0 auto; text-align: center; padding: 10px 4px; cursor: pointer;
+            flex: 1 0 auto; text-align: center; padding: 10px 6px; cursor: pointer;
             font-weight: 600; border-bottom: 3px solid transparent;
             transition: 0.2s; font-size: 13px; white-space: nowrap;
+            background: transparent; color: var(--text); border-radius: 12px 12px 0 0;
         }
-        .tab.active { border-bottom-color: var(--button); color: var(--button); }
+        .tab.active {
+            background: var(--glass-strong);
+            border-bottom-color: var(--button);
+            color: var(--button);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
         .tab-panel { display: none; animation: fadeIn 0.3s ease; }
         .tab-panel.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 
-        .form-group { margin-bottom: 16px; }
-        label { display: block; margin-bottom: 5px; font-weight: 500; font-size: 0.95em; }
+        .form-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 6px; font-weight: 600; font-size: 0.95em; }
         select, input[type="range"], input[type="number"], input[type="text"], input[type="color"] {
-            width: 100%; padding: 10px; border-radius: 10px;
-            border: 1px solid var(--secondary-bg);
-            background: var(--secondary-bg); color: var(--text); font-size: 15px;
+            width: 100%; padding: 12px 14px; border-radius: 16px;
+            border: 1px solid var(--border);
+            background: var(--glass-strong);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            color: var(--text); font-size: 15px;
+            transition: all 0.2s; outline: none;
+        }
+        select:focus, input:focus { border-color: var(--button); box-shadow: 0 0 0 3px rgba(0,122,255,0.2); }
+        input[type="range"] {
+            padding: 0; height: 8px; background: var(--glass); border-radius: 4px;
+            -webkit-appearance: none;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none; width: 24px; height: 24px;
+            background: var(--button); border-radius: 50%; cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+        .range-labels { display: flex; justify-content: space-between; font-size: 12px; opacity: 0.7; margin-top: 4px; }
+        .result {
+            background: var(--glass-strong);
+            border-radius: 24px;
+            padding: 20px;
+            margin: 24px 0;
+            line-height: 1.5;
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow);
+        }
+        .price { font-size: 28px; font-weight: 700; margin: 10px 0; transition: color 0.3s; }
+        button {
+            background: var(--glass-strong);
+            color: var(--text);
+            border: 1px solid var(--border);
+            padding: 14px;
+            border-radius: 20px;
+            font-size: 16px;
+            font-weight: 600;
+            width: 100%;
+            margin: 10px 0;
+            cursor: pointer;
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
             transition: all 0.2s;
         }
-        select:focus, input:focus { outline: none; border-color: var(--button); box-shadow: 0 0 0 2px rgba(36,129,204,0.2); }
-        input[type="range"] { padding: 0; height: 6px; background: var(--secondary-bg); }
-        .range-labels { display: flex; justify-content: space-between; font-size: 12px; opacity: 0.7; }
-        .result {
-            background: var(--secondary-bg); border-radius: 12px;
-            padding: 16px; margin: 20px 0; line-height: 1.6;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-            transition: all 0.3s;
+        button.primary {
+            background: var(--button);
+            color: var(--button-text);
+            border: none;
         }
-        .price { font-size: 26px; font-weight: bold; margin: 8px 0; transition: color 0.3s; }
-        button {
-            background: var(--button); color: var(--button-text);
-            border: none; padding: 12px; border-radius: 10px;
-            font-size: 16px; font-weight: 600; width: 100%; margin: 8px 0;
-            cursor: pointer; transition: opacity 0.2s, transform 0.1s;
+        button.danger {
+            background: rgba(255,59,48,0.2);
+            border-color: rgba(255,59,48,0.4);
+            color: #ff3b30;
         }
-        button:active { transform: scale(0.98); }
-        button.danger { background: #e74c3c; }
-        button.small { width: auto; padding: 6px 12px; margin: 2px; font-size: 14px; }
+        button.small { width: auto; padding: 8px 16px; margin: 4px; font-size: 14px; border-radius: 14px; }
         .material-item, .dict-item {
             display: flex; align-items: center; justify-content: space-between;
-            background: var(--secondary-bg); padding: 10px; border-radius: 10px;
-            margin-bottom: 8px; flex-wrap: wrap; box-shadow: 0 1px 3px rgba(0,0,0,0.03);
-            transition: background 0.2s;
+            background: var(--glass);
+            padding: 12px; border-radius: 16px;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border: 1px solid var(--border);
         }
-        .material-item:hover { background: var(--tg-theme-secondary-bg-color, #e8e8e8); }
         .material-info { flex: 1; }
         .material-color {
-            display: inline-block; width: 18px; height: 18px;
-            border-radius: 50%; margin-right: 8px; vertical-align: middle;
+            display: inline-block; width: 20px; height: 20px;
+            border-radius: 50%; margin-right: 10px; vertical-align: middle;
             border: 1px solid rgba(0,0,0,0.2);
         }
         .add-material-form, .dict-form {
-            background: var(--secondary-bg); border-radius: 12px;
-            padding: 16px; margin-top: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            background: var(--glass);
+            border-radius: 24px;
+            padding: 20px;
+            margin-top: 20px;
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--border);
         }
-        .add-material-form input, .add-material-form select { margin-bottom: 10px; }
-        .two-cols { display: flex; gap: 10px; }
+        .add-material-form input, .add-material-form select { margin-bottom: 12px; }
+        .two-cols { display: flex; gap: 12px; }
         .two-cols > * { flex: 1; }
         .hidden { display: none; }
+
         .custom-select { position: relative; width: 100%; }
         .custom-select-trigger {
-            padding: 10px; border-radius: 10px;
-            border: 1px solid var(--secondary-bg);
-            background: var(--secondary-bg); color: var(--text); font-size: 15px;
+            padding: 12px 14px; border-radius: 16px;
+            border: 1px solid var(--border);
+            background: var(--glass-strong);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            color: var(--text); font-size: 15px;
             cursor: pointer; display: flex; align-items: center; gap: 10px;
         }
         .custom-options {
             position: absolute; top: 100%; left: 0; right: 0;
-            background: var(--secondary-bg); border: 1px solid var(--secondary-bg);
-            border-radius: 0 0 10px 10px; max-height: 240px; overflow-y: auto;
+            background: var(--glass-strong);
+            border: 1px solid var(--border);
+            border-radius: 0 0 20px 20px;
+            max-height: 240px; overflow-y: auto;
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
             z-index: 10; display: none;
         }
         .custom-options.open { display: block; }
         .custom-option {
-            padding: 10px; cursor: pointer; display: flex; align-items: center; gap: 10px;
-            border-bottom: 1px solid rgba(128,128,128,0.15);
+            padding: 12px 14px; cursor: pointer; display: flex; align-items: center; gap: 10px;
+            border-bottom: 1px solid var(--border);
+            transition: background 0.2s;
         }
-        .custom-option:hover { background: var(--button); color: var(--button-text); }
+        .custom-option:hover { background: var(--button); color: #fff; }
         .color-dot {
-            display: inline-block; width: 18px; height: 18px;
+            display: inline-block; width: 20px; height: 20px;
             border-radius: 50%; border: 1px solid rgba(0,0,0,0.2); flex-shrink: 0;
         }
-        .sort-btns { display: flex; gap: 6px; margin-bottom: 12px; flex-wrap: wrap; }
-        .sort-btns button { font-size: 12px; padding: 5px 10px; margin: 0; }
+        .sort-btns { margin-bottom: 12px; }
+        .sort-btns button { font-size: 13px; padding: 8px 14px; margin: 0; }
         #ralSearchBlock {
-            background: var(--secondary-bg); padding: 12px; border-radius: 12px; margin-top: 8px;
+            background: var(--glass); border-radius: 16px; padding: 14px; margin-top: 10px;
         }
         #ralCodeInput { width: 100%; margin-bottom: 8px; }
     </style>
 </head>
 <body>
+    <div class="background"></div>
     <div class="container">
         <h2>🧮 Расчёт 3D-печати</h2>
 
@@ -163,19 +252,17 @@
                 </select>
             </div>
             <div class="result" id="result"></div>
-            <button id="sendBtn">📤 Отправить расчёт в чат</button>
+            <button id="sendBtn" class="primary">📤 Отправить расчёт в чат</button>
+            <button id="shareBtn">📋 Поделиться</button>
         </div>
 
         <div class="tab-panel" id="panel-materials">
             <h3>🎨 Список материалов</h3>
             <div class="sort-btns">
-                <button id="sortByBrand" class="small">По бренду</button>
                 <button id="sortByType" class="small">По типу</button>
-                <button id="sortByPrice" class="small">По цене/г</button>
-                <button id="sortByWeight" class="small">По весу упак.</button>
             </div>
             <div id="materialsList"></div>
-            <button id="showAddMaterial">➕ Добавить материал</button>
+            <button id="showAddMaterial" class="primary">➕ Добавить материал</button>
             <div class="add-material-form" id="addMaterialForm" style="display:none;">
                 <div class="form-group">
                     <label>Бренд</label>
@@ -215,7 +302,7 @@
                         <input type="number" id="newWeight" step="1" min="1" value="1000">
                     </div>
                 </div>
-                <button id="saveNewMaterial">💾 Сохранить</button>
+                <button id="saveNewMaterial" class="primary">💾 Сохранить</button>
                 <button id="cancelAddMaterial" class="danger">Отмена</button>
             </div>
         </div>
@@ -234,7 +321,7 @@
                 <label>Амортизация (Br/час)</label>
                 <input type="number" id="amortInput" step="0.1" min="0" value="10.0">
             </div>
-            <p style="font-size:0.9em; opacity:0.8; margin: 16px 0;">Все суммы в белорусских рублях (Br).</p>
+            <p style="font-size:0.9em; opacity:0.8; margin: 20px 0;">Все суммы в белорусских рублях (Br).</p>
             <button id="resetSettings" class="danger">🔄 Сбросить настройки</button>
         </div>
 
@@ -695,25 +782,14 @@
         function saveSettings(s) { localStorage.setItem('printCalcSettings', JSON.stringify(s)); }
         let settings = loadSettings();
 
-        let currentSort = { field: null, asc: true };
-        function sortMaterials(field) {
-            if (currentSort.field === field) {
-                currentSort.asc = !currentSort.asc;
-            } else {
-                currentSort.field = field;
-                currentSort.asc = true;
-            }
+        let sortByTypeAsc = true;
+        function sortByType() {
+            sortByTypeAsc = !sortByTypeAsc;
             settings.materials.sort((a,b) => {
-                let valA, valB;
-                switch(field) {
-                    case 'brand': valA = a.brand.toLowerCase(); valB = b.brand.toLowerCase(); break;
-                    case 'type': valA = a.type.toLowerCase(); valB = b.type.toLowerCase(); break;
-                    case 'pricePerGram': valA = a.pricePerPackage / a.packageWeight; valB = b.pricePerPackage / b.packageWeight; break;
-                    case 'packageWeight': valA = a.packageWeight; valB = b.packageWeight; break;
-                    default: return 0;
-                }
-                if (valA < valB) return currentSort.asc ? -1 : 1;
-                if (valA > valB) return currentSort.asc ? 1 : -1;
+                const nameA = a.type.toLowerCase();
+                const nameB = b.type.toLowerCase();
+                if (nameA < nameB) return sortByTypeAsc ? -1 : 1;
+                if (nameA > nameB) return sortByTypeAsc ? 1 : -1;
                 return 0;
             });
             saveSettings(settings);
@@ -728,6 +804,7 @@
         const marginSelect = document.getElementById('marginSelect');
         const resultDiv = document.getElementById('result');
         const sendBtn = document.getElementById('sendBtn');
+        const shareBtn = document.getElementById('shareBtn');
         const modelNameInput = document.getElementById('modelName');
         const materialsListDiv = document.getElementById('materialsList');
         const addMaterialForm = document.getElementById('addMaterialForm');
@@ -918,10 +995,10 @@
             const colorName = getColorName(mat);
 
             let priceColor;
-            if (margin <= 1.0) priceColor = '#27ae60';
-            else if (margin <= 1.2) priceColor = '#f1c40f';
-            else if (margin <= 1.5) priceColor = '#e67e22';
-            else priceColor = '#e74c3c';
+            if (margin <= 1.0) priceColor = '#34c759';
+            else if (margin <= 1.2) priceColor = '#ffcc00';
+            else if (margin <= 1.5) priceColor = '#ff9500';
+            else priceColor = '#ff3b30';
 
             resultDiv.innerHTML = `
                 <strong>📊 Детали расчёта</strong><br>
@@ -931,9 +1008,25 @@
                 ▪ Электричество: ${electricityCost.toFixed(2)} Br<br>
                 ▪ Амортизация: ${amortization.toFixed(2)} Br<br>
                 ▪ Себестоимость: ${costPrice.toFixed(2)} Br<br>
-                ▪ Наценка: ×${margin}<br>
                 <div class="price" style="color:${priceColor}">💰 Итого: ${finalPrice.toFixed(2)} Br</div>`;
             resultDiv.dataset.finalPrice = finalPrice.toFixed(2);
+            resultDiv.dataset.costPrice = costPrice.toFixed(2);
+        }
+
+        function generateShareText() {
+            const modelName = modelNameInput.value.trim() || 'Без названия';
+            const mat = settings.materials[selectedMaterialIndex];
+            if (!mat) return '';
+            const ppg = (mat.pricePerPackage / mat.packageWeight).toFixed(3);
+            const weight = weightInput.value;
+            const time = timeInput.value;
+            const costPrice = resultDiv.dataset.costPrice;
+            const finalPrice = resultDiv.dataset.finalPrice;
+            return `📊 Расчёт 3D-печати: ${modelName}\n` +
+                   `▪ Материал: ${mat.brand} ${mat.type} ${mat.series} (${getColorName(mat)}) ≈${ppg} Br/г\n` +
+                   `▪ Вес: ${weight} г\n` +
+                   `▪ Время печати: ${time} ч\n` +
+                   `💰 Итого к оплате: ${finalPrice} Br`;
         }
 
         sendBtn.addEventListener('click', () => {
@@ -952,6 +1045,22 @@
             };
             tg.sendData(JSON.stringify(data));
             tg.showPopup({ title: 'Готово', message: `Расчёт "${modelName}" отправлен.` });
+        });
+
+        shareBtn.addEventListener('click', async () => {
+            const text = generateShareText();
+            if (navigator.share) {
+                try {
+                    await navigator.share({ title: 'Расчёт 3D-печати', text: text });
+                } catch (e) {}
+            } else {
+                try {
+                    await navigator.clipboard.writeText(text);
+                    alert('Расчёт скопирован в буфер обмена.');
+                } catch (e) {
+                    alert('Не удалось поделиться.');
+                }
+            }
         });
 
         function loadGlobalParamsToForm() {
@@ -1050,10 +1159,7 @@
             }
         });
 
-        document.getElementById('sortByBrand').addEventListener('click', () => sortMaterials('brand'));
-        document.getElementById('sortByType').addEventListener('click', () => sortMaterials('type'));
-        document.getElementById('sortByPrice').addEventListener('click', () => sortMaterials('pricePerGram'));
-        document.getElementById('sortByWeight').addEventListener('click', () => sortMaterials('packageWeight'));
+        document.getElementById('sortByType').addEventListener('click', sortByType);
 
         weightInput.addEventListener('input', recalculate);
         timeInput.addEventListener('input', recalculate);
