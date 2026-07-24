@@ -34,8 +34,10 @@
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background: transparent;
             color: var(--text);
-            -webkit-overflow-scrolling: none;
+            position: fixed;
+            width: 100%;
             overscroll-behavior: none;
+            -webkit-overflow-scrolling: none;
         }
 
         .background {
@@ -47,13 +49,12 @@
         }
 
         .app-container {
-            position: relative;
-            z-index: 1;
-            width: 100%;
-            height: 100%;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
             display: flex;
             flex-direction: column;
             padding: env(safe-area-inset-top, 12px) 12px env(safe-area-inset-bottom, 12px) 12px;
+            z-index: 1;
         }
 
         .main-card {
@@ -107,6 +108,7 @@
             -webkit-overflow-scrolling: touch;
             overscroll-behavior: contain;
             padding: 20px 18px 24px;
+            touch-action: pan-y;
         }
 
         .tab-panel { display: none; }
@@ -147,35 +149,11 @@
             backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
             border: 1px solid var(--border);
         }
-        .add-material-form {
-            background: var(--glass); border-radius: 24px; padding: 20px; margin-top: 20px;
-            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-            border: 1px solid var(--border);
-        }
         .two-cols { display: flex; gap: 12px; }
         .two-cols > * { flex: 1; }
         .hidden { display: none; }
 
-        .result {
-            background: var(--glass-strong); border-radius: 24px; padding: 20px; margin: 24px 0; line-height: 1.6;
-            backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px);
-            border: 1px solid var(--border); box-shadow: var(--shadow);
-        }
-        .price { font-size: 28px; font-weight: 700; margin: 10px 0; }
-
-        .part-card {
-            background: var(--glass); border-radius: 20px; padding: 16px;
-            margin-bottom: 16px; border: 1px solid var(--border);
-            backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
-        }
-        .part-card h4 { margin-bottom: 8px; font-size: 1.1em; }
-        .part-card .detail-row { display: flex; justify-content: space-between; flex-wrap: wrap; margin: 4px 0; }
-        .part-card .detail-row span { font-size: 0.95em; }
-
-        .summary-block { background: var(--glass-strong); border-radius: 20px; padding: 16px; margin-top: 16px; }
-        .summary-block hr { border: 0.5px solid var(--border); margin: 12px 0; }
-
-        /* Модальное окно */
+        /* Модальные окна */
         .modal-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.4);
@@ -191,6 +169,14 @@
             width: 90%; max-width: 400px;
             border: 1px solid var(--border);
             box-shadow: var(--shadow);
+            color: var(--text);
+        }
+        .modal-content h3 { margin-bottom: 16px; font-size: 1.3em; }
+        .modal-content .form-group { margin-bottom: 14px; }
+        .modal-content select, .modal-content input {
+            background: var(--glass);
+            border: 1px solid var(--border);
+            color: var(--text);
         }
         input[type="range"] {
             width: 100%; padding: 0; height: 8px; background: var(--glass); border-radius: 4px;
@@ -201,6 +187,17 @@
             background: var(--button); border-radius: 50%; cursor: pointer;
             box-shadow: 0 2px 8px rgba(0,0,0,0.2);
         }
+
+        /* Карточки деталей и сводка */
+        .part-card {
+            background: var(--glass); border-radius: 20px; padding: 16px;
+            margin-bottom: 16px; border: 1px solid var(--border);
+            backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
+        }
+        .part-card h4 { margin-bottom: 8px; font-size: 1.1em; }
+        .detail-row { display: flex; justify-content: space-between; margin: 4px 0; }
+        .summary-block { background: var(--glass-strong); border-radius: 20px; padding: 16px; margin-top: 16px; }
+        .summary-block hr { border: 0.5px solid var(--border); margin: 12px 0; }
     </style>
 </head>
 <body>
@@ -244,15 +241,6 @@
                     <button id="sortByType" class="small">По типу</button>
                     <div id="materialsList"></div>
                     <button id="showAddMaterial" class="primary">➕ Добавить материал</button>
-                    <div class="add-material-form hidden" id="addMaterialForm">
-                        <div class="form-group"><label>Бренд</label><select id="brandSelect"></select><input type="text" id="newBrandOther" class="hidden" placeholder="Введите бренд"></div>
-                        <div class="form-group"><label>Тип</label><select id="typeSelect"></select><input type="text" id="newTypeOther" class="hidden" placeholder="Введите тип"></div>
-                        <div class="form-group"><label>Серия</label><input type="text" id="newSeries" placeholder="Pro, Silk, Easy..."></div>
-                        <div class="form-group"><label>Цвет</label><div style="display:flex; gap:10px;"><input type="color" id="newColorPicker" value="#ff0000" style="width:60px;"><input type="text" id="newColorText" placeholder="Название или HEX" style="flex:1;"></div></div>
-                        <div class="two-cols"><div class="form-group"><label>Цена (Br)</label><input type="number" id="newPrice" value="30" step="0.01"></div><div class="form-group"><label>Вес упак. (г)</label><input type="number" id="newWeight" value="1000" step="1"></div></div>
-                        <button id="saveNewMaterial" class="primary">💾 Сохранить</button>
-                        <button id="cancelAddMaterial" class="danger">Отмена</button>
-                    </div>
                 </div>
 
                 <!-- Настройки -->
@@ -274,7 +262,7 @@
     </div>
 
     <!-- Модальное окно добавления детали -->
-    <div class="modal-overlay hidden" id="modalOverlay">
+    <div class="modal-overlay hidden" id="partModal">
         <div class="modal-content">
             <h3>Новая деталь</h3>
             <div class="form-group">
@@ -294,6 +282,42 @@
             <div class="two-cols">
                 <button id="modalCancelBtn" class="danger">Отмена</button>
                 <button id="modalAddBtn" class="primary">Добавить</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно добавления материала -->
+    <div class="modal-overlay hidden" id="materialModal">
+        <div class="modal-content">
+            <h3>Новый материал</h3>
+            <div class="form-group">
+                <label>Бренд</label>
+                <select id="matBrandSelect"><option value="">-- Выберите бренд --</option></select>
+                <input type="text" id="matBrandOther" class="hidden" placeholder="Введите бренд">
+            </div>
+            <div class="form-group">
+                <label>Тип филамента</label>
+                <select id="matTypeSelect"><option value="">-- Выберите тип --</option></select>
+                <input type="text" id="matTypeOther" class="hidden" placeholder="Введите тип">
+            </div>
+            <div class="form-group">
+                <label>Серия</label>
+                <input type="text" id="matSeries" placeholder="Pro, Silk, Easy...">
+            </div>
+            <div class="form-group">
+                <label>Цвет</label>
+                <div style="display:flex; gap:10px;">
+                    <input type="color" id="matColorPicker" value="#ff0000" style="width:60px; padding:0;">
+                    <input type="text" id="matColorText" placeholder="Название или HEX" style="flex:1;">
+                </div>
+            </div>
+            <div class="two-cols">
+                <div class="form-group"><label>Стоимость (Br)</label><input type="number" id="matPrice" value="30" step="0.01" placeholder="30"></div>
+                <div class="form-group"><label>Масса катушки (г)</label><input type="number" id="matWeight" value="1000" step="1" placeholder="1000"></div>
+            </div>
+            <div class="two-cols">
+                <button id="matCancelBtn" class="danger">Отмена</button>
+                <button id="matSaveBtn" class="primary">Сохранить</button>
             </div>
         </div>
     </div>
@@ -331,12 +355,15 @@
             });
             if (otherOption) { let o = document.createElement('option'); o.value = 'other'; o.textContent = 'Другое...'; select.appendChild(o); }
         }
+
         function populateAllSelects() {
-            populateSelect(document.getElementById('brandSelect'), customBrands, brandUsage);
-            populateSelect(document.getElementById('typeSelect'), customTypes, typeUsage);
-            updateMaterialSelects();
+            populateSelect(document.getElementById('matBrandSelect'), customBrands, brandUsage);
+            populateSelect(document.getElementById('matTypeSelect'), customTypes, typeUsage);
+            populateSelect(document.getElementById('modalMaterialSelect'), null, null, false);
+            updatePartMaterialSelect();
         }
-        function updateMaterialSelects() {
+
+        function updatePartMaterialSelect() {
             let sel = document.getElementById('modalMaterialSelect');
             if (!sel) return;
             sel.innerHTML = '';
@@ -421,8 +448,8 @@
             document.getElementById('result').dataset.final = final.toFixed(2);
         }
 
-        // Модальное окно
-        const modal = document.getElementById('modalOverlay');
+        // Модальное окно детали
+        const partModal = document.getElementById('partModal');
         const modalMaterial = document.getElementById('modalMaterialSelect');
         const modalWeightRange = document.getElementById('modalWeightRange');
         const modalWeightInput = document.getElementById('modalWeightInput');
@@ -432,46 +459,71 @@
         const modalTimeValue = document.getElementById('modalTimeValue');
 
         function syncRangeInput(range, input, valueSpan) {
-            range.addEventListener('input', () => {
-                input.value = range.value;
-                valueSpan.textContent = range.value;
-            });
-            input.addEventListener('input', () => {
-                range.value = input.value;
-                valueSpan.textContent = input.value;
-            });
+            range.addEventListener('input', () => { input.value = range.value; valueSpan.textContent = range.value; });
+            input.addEventListener('input', () => { range.value = input.value; valueSpan.textContent = input.value; });
         }
         syncRangeInput(modalWeightRange, modalWeightInput, modalWeightValue);
         syncRangeInput(modalTimeRange, modalTimeInput, modalTimeValue);
 
         document.getElementById('addPartBtn').addEventListener('click', () => {
-            updateMaterialSelects();
-            modal.classList.remove('hidden');
+            updatePartMaterialSelect();
+            partModal.classList.remove('hidden');
         });
-        document.getElementById('modalCancelBtn').addEventListener('click', () => modal.classList.add('hidden'));
+        document.getElementById('modalCancelBtn').addEventListener('click', () => partModal.classList.add('hidden'));
         document.getElementById('modalAddBtn').addEventListener('click', () => {
             let idx = modalMaterial.value;
             if (idx === '') { alert('Выберите материал'); return; }
             let mat = settings.materials[idx];
-            parts.push({
-                mat: mat,
-                weight: parseFloat(modalWeightInput.value) || 100,
-                time: parseFloat(modalTimeInput.value) || 4
-            });
-            modal.classList.add('hidden');
+            parts.push({ mat, weight: parseFloat(modalWeightInput.value) || 100, time: parseFloat(modalTimeInput.value) || 4 });
+            partModal.classList.add('hidden');
             renderParts();
             recalc();
+        });
+
+        // Модальное окно материала
+        const matModal = document.getElementById('materialModal');
+        document.getElementById('showAddMaterial').addEventListener('click', () => {
+            populateAllSelects();
+            matModal.classList.remove('hidden');
+        });
+        document.getElementById('matCancelBtn').addEventListener('click', () => matModal.classList.add('hidden'));
+        document.getElementById('matSaveBtn').addEventListener('click', () => {
+            let brand = document.getElementById('matBrandSelect').value;
+            if (brand === 'other') brand = document.getElementById('matBrandOther').value.trim();
+            let type = document.getElementById('matTypeSelect').value;
+            if (type === 'other') type = document.getElementById('matTypeOther').value.trim();
+            if (!brand || !type) return alert('Заполните бренд и тип');
+            let material = {
+                brand, type,
+                series: document.getElementById('matSeries').value.trim(),
+                color: document.getElementById('matColorText').value.trim() || document.getElementById('matColorPicker').value,
+                pricePerPackage: parseFloat(document.getElementById('matPrice').value) || 30,
+                packageWeight: parseFloat(document.getElementById('matWeight').value) || 1000
+            };
+            settings.materials.push(material);
+            incUsage('brandUsage', brand); brandUsage = getUsage('brandUsage');
+            incUsage('typeUsage', type); typeUsage = getUsage('typeUsage');
+            if (!customBrands.includes(brand)) { customBrands.push(brand); saveBrands(); }
+            if (!customTypes.includes(type)) { customTypes.push(type); saveTypes(); }
+            saveAll();
+            matModal.classList.add('hidden');
+            updatePartMaterialSelect();
+            renderMaterialsList();
+        });
+
+        // Переключение "Другое" в селектах материала
+        document.getElementById('matBrandSelect').addEventListener('change', function() {
+            document.getElementById('matBrandOther').classList.toggle('hidden', this.value !== 'other');
+        });
+        document.getElementById('matTypeSelect').addEventListener('change', function() {
+            document.getElementById('matTypeOther').classList.toggle('hidden', this.value !== 'other');
         });
 
         // Остальные обработчики
         document.getElementById('saveOrderBtn').addEventListener('click', () => {
             let name = document.getElementById('orderName').value.trim() || 'Без названия';
             let margin = document.getElementById('marginSelect').value;
-            let order = {
-                name, margin,
-                parts: parts.map(p => ({ matIndex: settings.materials.indexOf(p.mat), weight: p.weight, time: p.time })),
-                date: new Date().toISOString()
-            };
+            let order = { name, margin, parts: parts.map(p => ({ matIndex: settings.materials.indexOf(p.mat), weight: p.weight, time: p.time })), date: new Date().toISOString() };
             let archive = getDict('orders', []);
             archive.push(order);
             saveDict('orders', archive);
@@ -509,32 +561,6 @@
             else { navigator.clipboard.writeText(text); alert('Скопировано'); }
         });
 
-        // Материалы и справочники
-        document.getElementById('showAddMaterial').addEventListener('click', () => {
-            populateAllSelects();
-            document.getElementById('addMaterialForm').classList.remove('hidden');
-        });
-        document.getElementById('saveNewMaterial').addEventListener('click', () => {
-            let b = document.getElementById('brandSelect').value;
-            if (b === 'other') b = document.getElementById('newBrandOther').value;
-            let t = document.getElementById('typeSelect').value;
-            if (t === 'other') t = document.getElementById('newTypeOther').value;
-            if (!b || !t) return alert('Заполните бренд и тип');
-            settings.materials.push({
-                brand: b, type: t, series: document.getElementById('newSeries').value,
-                color: document.getElementById('newColorText').value || document.getElementById('newColorPicker').value,
-                pricePerPackage: parseFloat(document.getElementById('newPrice').value),
-                packageWeight: parseFloat(document.getElementById('newWeight').value)
-            });
-            incUsage('brandUsage', b); incUsage('typeUsage', t);
-            if (!customBrands.includes(b)) { customBrands.push(b); saveBrands(); }
-            if (!customTypes.includes(t)) { customTypes.push(t); saveTypes(); }
-            saveAll();
-            document.getElementById('addMaterialForm').classList.add('hidden');
-            updateMaterialSelects();
-            renderMaterialsList();
-        });
-        document.getElementById('cancelAddMaterial').addEventListener('click', () => document.getElementById('addMaterialForm').classList.add('hidden'));
         function renderMaterialsList() {
             let list = document.getElementById('materialsList'); list.innerHTML = '';
             settings.materials.forEach((m,i) => {
@@ -544,12 +570,12 @@
                 list.appendChild(d);
             });
             document.querySelectorAll('.del-mat').forEach(b => b.addEventListener('click', e => {
-                settings.materials.splice(e.target.dataset.idx, 1); saveAll(); updateMaterialSelects(); renderMaterialsList();
+                settings.materials.splice(e.target.dataset.idx, 1); saveAll(); updatePartMaterialSelect(); renderMaterialsList();
             }));
         }
         document.getElementById('sortByType').addEventListener('click', () => {
             settings.materials.sort((a,b) => a.type.localeCompare(b.type));
-            saveAll(); updateMaterialSelects(); renderMaterialsList();
+            saveAll(); updatePartMaterialSelect(); renderMaterialsList();
         });
         document.getElementById('addBrandBtn').addEventListener('click', () => {
             let v = document.getElementById('newBrandInput').value.trim();
@@ -606,7 +632,7 @@
 
         // Инициализация
         populateAllSelects();
-        updateMaterialSelects();
+        updatePartMaterialSelect();
         renderMaterialsList();
         renderBrandsList();
         renderTypesList();
