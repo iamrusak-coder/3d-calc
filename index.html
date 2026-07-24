@@ -7,68 +7,56 @@
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         :root {
-            --bg: rgba(255,255,255,0.2);
+            --bg: rgba(255,255,255,0.15);
             --text: #1c1c1e;
             --button: #007aff;
             --button-text: #ffffff;
             --glass: rgba(255,255,255,0.45);
             --glass-strong: rgba(255,255,255,0.65);
-            --border: rgba(255,255,255,0.5);
-            --shadow: 0 8px 32px rgba(0,0,0,0.1);
+            --border: rgba(255,255,255,0.4);
+            --shadow: 0 8px 32px rgba(0,0,0,0.08);
         }
         @media (prefers-color-scheme: dark) {
             :root {
                 --bg: rgba(28,28,30,0.3);
                 --text: #f5f5f7;
-                --glass: rgba(255,255,255,0.1);
-                --glass-strong: rgba(255,255,255,0.18);
-                --border: rgba(255,255,255,0.2);
-                --shadow: 0 8px 32px rgba(0,0,0,0.5);
+                --glass: rgba(255,255,255,0.08);
+                --glass-strong: rgba(255,255,255,0.14);
+                --border: rgba(255,255,255,0.15);
+                --shadow: 0 8px 32px rgba(0,0,0,0.4);
             }
         }
         * { box-sizing: border-box; margin: 0; padding: 0; }
 
-        html, body {
-            height: 100%;
+        body {
+            height: 100vh;
+            width: 100vw;
             overflow: hidden;
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: transparent;
-            color: var(--text);
-            position: fixed;
-            width: 100%;
-            touch-action: none;
-        }
-
-        .background {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: var(--bg);
             backdrop-filter: blur(40px) saturate(180%);
             -webkit-backdrop-filter: blur(40px) saturate(180%);
-            z-index: 0;
+            color: var(--text);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: env(safe-area-inset-top, 12px) 12px env(safe-area-inset-bottom, 12px) 12px;
+            touch-action: none;
         }
 
         .app-container {
-            position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
-            display: flex;
-            flex-direction: column;
-            padding: env(safe-area-inset-top, 12px) 12px env(safe-area-inset-bottom, 12px) 12px;
-            z-index: 1;
-        }
-
-        .main-card {
-            flex: 1;
             width: 100%;
             max-width: 500px;
-            margin: 0 auto;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
             background: var(--glass);
             border-radius: 32px;
             backdrop-filter: blur(30px) saturate(180%);
             -webkit-backdrop-filter: blur(30px) saturate(180%);
             border: 1px solid var(--border);
             box-shadow: var(--shadow);
-            display: flex;
-            flex-direction: column;
             overflow: hidden;
         }
 
@@ -78,6 +66,9 @@
             border-bottom: 2px solid var(--border);
             padding: 16px 16px 0;
             flex-shrink: 0;
+            background: var(--glass-strong);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
         }
         .tab {
             flex: 1 0 auto;
@@ -94,9 +85,9 @@
             border-radius: 12px 12px 0 0;
         }
         .tab.active {
-            background: var(--glass-strong);
+            background: var(--button);
+            color: var(--button-text);
             border-bottom-color: var(--button);
-            color: var(--button);
         }
 
         .tab-content {
@@ -150,7 +141,6 @@
         .two-cols > * { flex: 1; }
         .hidden { display: none; }
 
-        /* Модальные окна */
         .modal-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.4);
@@ -166,17 +156,13 @@
             width: 90%; max-width: 400px;
             border: 1px solid var(--border);
             box-shadow: var(--shadow);
-            color: #1c1c1e;
-        }
-        @media (prefers-color-scheme: dark) {
-            .modal-content { color: #f5f5f7; }
+            color: var(--text);
         }
         .modal-content h3 { margin-bottom: 16px; font-size: 1.3em; }
         .modal-content .form-group { margin-bottom: 14px; }
         .modal-content select, .modal-content input {
-            background: rgba(255,255,255,0.3);
+            background: var(--glass);
             border: 1px solid var(--border);
-            color: inherit;
         }
         input[type="range"] {
             width: 100%; padding: 0; height: 8px; background: var(--glass); border-radius: 4px;
@@ -200,67 +186,57 @@
     </style>
 </head>
 <body>
-    <div class="background"></div>
     <div class="app-container">
-        <div class="main-card">
-            <div class="tabs-header">
-                <div class="tab active" data-tab="calc">📊 Расчёт</div>
-                <div class="tab" data-tab="materials">🎨 Материалы</div>
-                <div class="tab" data-tab="settings">⚙️ Настройки</div>
-                <div class="tab" data-tab="dictionaries">📋 Справочники</div>
+        <div class="tabs-header">
+            <div class="tab active" data-tab="calc">📊 Расчёт</div>
+            <div class="tab" data-tab="materials">🎨 Материалы</div>
+            <div class="tab" data-tab="settings">⚙️ Настройки</div>
+            <div class="tab" data-tab="dictionaries">📋 Справочники</div>
+        </div>
+        <div class="tab-content">
+            <div class="tab-panel active" id="panel-calc">
+                <div class="form-group">
+                    <label>Название заказа</label>
+                    <input type="text" id="orderName" placeholder="например, Кронштейн v2">
+                </div>
+                <button id="addPartBtn" class="primary">➕ Добавить деталь</button>
+                <div id="partsContainer" class="parts-list"></div>
+                <div class="form-group" style="margin-top:20px;">
+                    <label>Наценка на заказ</label>
+                    <select id="marginSelect">
+                        <option value="1.0">×1.0 (без наценки)</option>
+                        <option value="1.2" selected>×1.2 (+20%)</option>
+                        <option value="1.5">×1.5 (+50%)</option>
+                        <option value="2.0">×2.0 (+100%)</option>
+                    </select>
+                </div>
+                <div class="result" id="result"></div>
+                <button id="shareBtn">📋 Поделиться</button>
+                <button id="saveOrderBtn">💾 Сохранить заказ</button>
+                <button id="loadOrderBtn">📂 Загрузить из архива</button>
+                <div id="archiveList" class="hidden" style="margin-top:16px;"></div>
             </div>
-            <div class="tab-content">
-                <!-- Вкладка Расчёт -->
-                <div class="tab-panel active" id="panel-calc">
-                    <div class="form-group">
-                        <label>Название заказа</label>
-                        <input type="text" id="orderName" placeholder="например, Кронштейн v2">
-                    </div>
-                    <button id="addPartBtn" class="primary">➕ Добавить деталь</button>
-                    <div id="partsContainer" class="parts-list"></div>
-                    <div class="form-group" style="margin-top:20px;">
-                        <label>Наценка на заказ</label>
-                        <select id="marginSelect">
-                            <option value="1.0">×1.0 (без наценки)</option>
-                            <option value="1.2" selected>×1.2 (+20%)</option>
-                            <option value="1.5">×1.5 (+50%)</option>
-                            <option value="2.0">×2.0 (+100%)</option>
-                        </select>
-                    </div>
-                    <div class="result" id="result"></div>
-                    <button id="shareBtn">📋 Поделиться</button>
-                    <button id="saveOrderBtn">💾 Сохранить заказ</button>
-                    <button id="loadOrderBtn">📂 Загрузить из архива</button>
-                    <div id="archiveList" class="hidden" style="margin-top:16px;"></div>
-                </div>
-
-                <!-- Вкладка Материалы -->
-                <div class="tab-panel" id="panel-materials">
-                    <h3>🎨 Мои материалы</h3>
-                    <button id="sortAlphaBtn" class="small">По алфавиту</button>
-                    <div id="materialsList"></div>
-                    <button id="showAddMaterial" class="primary" style="margin-top:20px;">➕ Добавить материал</button>
-                </div>
-
-                <!-- Настройки -->
-                <div class="tab-panel" id="panel-settings">
-                    <h3>🔧 Глобальные параметры</h3>
-                    <div class="form-group"><label>Мощность (кВт)</label><input type="number" id="powerInput" value="0.15" step="0.01"></div>
-                    <div class="form-group"><label>Тариф (Br/кВт·ч)</label><input type="number" id="tariffInput" value="0.25" step="0.01"></div>
-                    <div class="form-group"><label>Амортизация (Br/ч)</label><input type="number" id="amortInput" value="10.0" step="0.1"></div>
-                    <button id="resetSettings" class="danger">🔄 Сбросить настройки</button>
-                </div>
-                <!-- Справочники -->
-                <div class="tab-panel" id="panel-dictionaries">
-                    <h3>📋 Бренды и типы</h3>
-                    <div class="form-group"><label>Бренды</label><div id="brandsList"></div><input type="text" id="newBrandInput" placeholder="Новый бренд"><button id="addBrandBtn" class="small">Добавить</button></div>
-                    <div class="form-group"><label>Типы</label><div id="typesList"></div><input type="text" id="newTypeInput" placeholder="Новый тип"><button id="addTypeBtn" class="small">Добавить</button></div>
-                </div>
+            <div class="tab-panel" id="panel-materials">
+                <h3>🎨 Мои материалы</h3>
+                <div id="materialsList"></div>
+                <button id="showAddMaterial" class="primary" style="margin-top:20px;">➕ Добавить материал</button>
+            </div>
+            <div class="tab-panel" id="panel-settings">
+                <h3>🔧 Глобальные параметры</h3>
+                <div class="form-group"><label>Мощность (кВт)</label><input type="number" id="powerInput" value="0.15" step="0.01"></div>
+                <div class="form-group"><label>Тариф (Br/кВт·ч)</label><input type="number" id="tariffInput" value="0.25" step="0.01"></div>
+                <div class="form-group"><label>Амортизация (Br/ч)</label><input type="number" id="amortInput" value="10.0" step="0.1"></div>
+                <button id="resetSettings" class="danger">🔄 Сбросить настройки</button>
+            </div>
+            <div class="tab-panel" id="panel-dictionaries">
+                <h3>📋 Бренды и типы</h3>
+                <div class="form-group"><label>Бренды</label><div id="brandsList"></div><input type="text" id="newBrandInput" placeholder="Новый бренд"><button id="addBrandBtn" class="small">Добавить</button></div>
+                <div class="form-group"><label>Типы</label><div id="typesList"></div><input type="text" id="newTypeInput" placeholder="Новый тип"><button id="addTypeBtn" class="small">Добавить</button></div>
             </div>
         </div>
     </div>
 
-    <!-- Модальное окно добавления детали -->
+    <!-- Модалка детали -->
     <div class="modal-overlay hidden" id="partModal">
         <div class="modal-content">
             <h3>Новая деталь</h3>
@@ -285,7 +261,7 @@
         </div>
     </div>
 
-    <!-- Модальное окно добавления материала -->
+    <!-- Модалка материала -->
     <div class="modal-overlay hidden" id="materialModal">
         <div class="modal-content">
             <h3>Новый материал</h3>
@@ -325,7 +301,6 @@
         const tg = window.Telegram?.WebApp;
         if (tg) { tg.ready(); tg.expand(); }
 
-        // Блокировка закрывающего свайпа
         document.addEventListener('touchmove', function(e) {
             if (!e.target.closest('.tab-content')) {
                 e.preventDefault();
@@ -453,7 +428,7 @@
             document.getElementById('result').dataset.final = final.toFixed(2);
         }
 
-        // Модальное окно детали
+        // Модалка детали
         const partModal = document.getElementById('partModal');
         const modalMaterial = document.getElementById('modalMaterialSelect');
         const modalWeightRange = document.getElementById('modalWeightRange');
@@ -485,7 +460,7 @@
             recalc();
         });
 
-        // Модальное окно материала
+        // Модалка материала
         const matModal = document.getElementById('materialModal');
         document.getElementById('showAddMaterial').addEventListener('click', () => {
             populateAllSelects();
@@ -523,7 +498,6 @@
             document.getElementById('matTypeOther').classList.toggle('hidden', this.value !== 'other');
         });
 
-        // Остальные обработчики
         document.getElementById('saveOrderBtn').addEventListener('click', () => {
             let name = document.getElementById('orderName').value.trim() || 'Без названия';
             let margin = document.getElementById('marginSelect').value;
@@ -567,7 +541,7 @@
 
         function renderMaterialsList() {
             let list = document.getElementById('materialsList'); list.innerHTML = '';
-            settings.materials.forEach((m,i) => {
+            settings.materials.sort((a,b) => (a.type || '').localeCompare(b.type || '')).forEach((m,i) => {
                 let d = document.createElement('div'); d.className = 'material-item';
                 d.innerHTML = `<span>${m.brand} ${m.type} ${m.series} (${m.pricePerPackage} Br/${m.packageWeight}г)</span>
                                <button class="small del-mat" data-idx="${i}">🗑️</button>`;
@@ -577,10 +551,7 @@
                 settings.materials.splice(e.target.dataset.idx, 1); saveAll(); updatePartMaterialSelect(); renderMaterialsList();
             }));
         }
-        document.getElementById('sortAlphaBtn').addEventListener('click', () => {
-            settings.materials.sort((a,b) => a.type.localeCompare(b.type));
-            saveAll(); updatePartMaterialSelect(); renderMaterialsList();
-        });
+
         document.getElementById('addBrandBtn').addEventListener('click', () => {
             let v = document.getElementById('newBrandInput').value.trim();
             if (v && !customBrands.includes(v)) { customBrands.push(v); saveBrands(); populateAllSelects(); renderBrandsList(); }
@@ -621,7 +592,6 @@
             location.reload();
         });
 
-        // Вкладки
         document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => {
             document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
             document.querySelectorAll('.tab-panel').forEach(x => x.classList.remove('active'));
@@ -634,7 +604,6 @@
             }
         }));
 
-        // Инициализация
         populateAllSelects();
         updatePartMaterialSelect();
         renderMaterialsList();
