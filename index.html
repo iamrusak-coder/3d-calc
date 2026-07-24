@@ -48,14 +48,8 @@
         .tab-panel { display: none; }
         .tab-panel.active { display: block; }
 
-        .form-group {
-            margin-bottom: 16px;
-        }
-        label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: 500;
-        }
+        .form-group { margin-bottom: 16px; }
+        label { display: block; margin-bottom: 5px; font-weight: 500; }
         select, input[type="range"], input[type="number"], input[type="text"], input[type="color"] {
             width: 100%;
             padding: 10px;
@@ -66,12 +60,7 @@
             font-size: 15px;
         }
         input[type="range"] { padding: 0; height: 6px; }
-        .range-labels {
-            display: flex;
-            justify-content: space-between;
-            font-size: 13px;
-            opacity: 0.7;
-        }
+        .range-labels { display: flex; justify-content: space-between; font-size: 13px; opacity: 0.7; }
         .result {
             background: var(--secondary-bg);
             border-radius: 12px;
@@ -79,12 +68,7 @@
             margin: 20px 0;
             line-height: 1.6;
         }
-        .price {
-            font-size: 24px;
-            font-weight: bold;
-            color: var(--button);
-            margin: 8px 0;
-        }
+        .price { font-size: 24px; font-weight: bold; color: var(--button); margin: 8px 0; }
         button {
             background: var(--button);
             color: var(--button-text);
@@ -116,11 +100,7 @@
             vertical-align: middle;
             border: 1px solid #ccc;
         }
-        .material-actions button {
-            width: auto;
-            padding: 5px 12px;
-            margin: 0 2px;
-        }
+        .material-actions button { width: auto; padding: 5px 12px; margin: 0 2px; }
         .add-material-form {
             background: var(--secondary-bg);
             border-radius: 12px;
@@ -133,13 +113,11 @@
     <div class="container">
         <h2>🧮 Расчёт 3D-печати</h2>
 
-        <!-- Вкладки -->
         <div class="tabs">
             <div class="tab active" data-tab="calc">📊 Расчёт</div>
             <div class="tab" data-tab="settings">⚙️ Настройки</div>
         </div>
 
-        <!-- Панель расчёта -->
         <div class="tab-panel active" id="panel-calc">
             <div class="form-group">
                 <label>Материал:</label>
@@ -172,7 +150,6 @@
             <button id="sendBtn">📤 Отправить расчёт в чат</button>
         </div>
 
-        <!-- Панель настроек -->
         <div class="tab-panel" id="panel-settings">
             <h3>🔧 Глобальные параметры</h3>
             <div class="form-group">
@@ -215,8 +192,15 @@
     </div>
 
     <script>
-        const tg = window.Telegram.WebApp;
-        tg.expand();
+        // Безопасно получаем Telegram WebApp API
+        const tg = window.Telegram?.WebApp;
+        // Если нет API (браузер) – tg будет undefined, но страница всё равно загрузится.
+
+        // Вызываем ready как можно раньше, если API есть
+        if (tg) {
+            tg.ready();
+            tg.expand(); // разворачиваем после ready
+        }
 
         // ---------- Хранилище по умолчанию ----------
         const DEFAULT_SETTINGS = {
@@ -230,7 +214,6 @@
             ]
         };
 
-        // Загрузка из localStorage или defaults
         function loadSettings() {
             const saved = localStorage.getItem('printCalcSettings');
             if (saved) {
@@ -245,7 +228,6 @@
 
         let settings = loadSettings();
 
-        // ---------- Элементы DOM ----------
         const materialSelect = document.getElementById('materialSelect');
         const weightInput = document.getElementById('weight');
         const weightValue = document.getElementById('weightValue');
@@ -255,24 +237,19 @@
         const resultDiv = document.getElementById('result');
         const sendBtn = document.getElementById('sendBtn');
 
-        // Поля настроек
         const powerInput = document.getElementById('powerInput');
         const tariffInput = document.getElementById('tariffInput');
         const amortInput = document.getElementById('amortInput');
         const materialsListDiv = document.getElementById('materialsList');
         const addMaterialForm = document.getElementById('addMaterialForm');
 
-        // ---------- Обновление выпадающего списка материалов ----------
         function updateMaterialSelect() {
             materialSelect.innerHTML = '';
             settings.materials.forEach((mat, index) => {
                 const option = document.createElement('option');
                 option.value = index;
-                // Показываем цветной кружок + название
-                option.textContent = `${mat.color ? '●' : ''} ${mat.name} (${mat.price} руб/г)`;
-                // Можно стилизовать через data-атрибуты, но текст достаточно
+                option.textContent = `${mat.name} — ${mat.price} руб/г`;
             });
-            // Если материалов нет, добавим пустой
             if (settings.materials.length === 0) {
                 const option = document.createElement('option');
                 option.textContent = 'Нет материалов';
@@ -280,7 +257,6 @@
             }
         }
 
-        // ---------- Отображение списка материалов в настройках ----------
         function renderMaterialsList() {
             materialsListDiv.innerHTML = '';
             settings.materials.forEach((mat, index) => {
@@ -299,7 +275,6 @@
                 materialsListDiv.appendChild(div);
             });
 
-            // Обработчики удаления
             document.querySelectorAll('.delete-material').forEach(btn => {
                 btn.addEventListener('click', (e) => {
                     const index = e.target.dataset.index;
@@ -311,7 +286,6 @@
                 });
             });
 
-            // Обработчики редактирования (заполним поля формы)
             document.querySelectorAll('.edit-material').forEach(btn => {
                 btn.addEventListener('click', (e) => {
                     const index = e.target.dataset.index;
@@ -321,13 +295,11 @@
                     document.getElementById('newMatColorText').value = mat.color || '';
                     document.getElementById('newMatPrice').value = mat.price;
                     addMaterialForm.style.display = 'block';
-                    // Сохраним индекс для обновления
                     addMaterialForm.dataset.editIndex = index;
                 });
             });
         }
 
-        // ---------- Добавление / изменение материала ----------
         function saveMaterial() {
             const name = document.getElementById('newMatName').value.trim();
             const colorPicker = document.getElementById('newMatColorPicker').value;
@@ -337,19 +309,16 @@
                 alert('Заполните название и цену корректно.');
                 return;
             }
-            const color = colorText || colorPicker; // приоритет текстовому полю
+            const color = colorText || colorPicker;
 
             const editIndex = addMaterialForm.dataset.editIndex;
             if (editIndex !== undefined && editIndex !== '') {
-                // Редактирование существующего
                 settings.materials[editIndex] = { name, color, price };
             } else {
-                // Новый материал
                 settings.materials.push({ name, color, price });
             }
 
             saveSettings(settings);
-            // Очищаем форму
             document.getElementById('newMatName').value = '';
             document.getElementById('newMatColorPicker').value = '#ff0000';
             document.getElementById('newMatColorText').value = '';
@@ -361,7 +330,6 @@
             recalculate();
         }
 
-        // ---------- Глобальные параметры ----------
         function loadGlobalParams() {
             powerInput.value = settings.power;
             tariffInput.value = settings.tariff;
@@ -376,10 +344,9 @@
             recalculate();
         }
 
-        // ---------- Расчёт ----------
         function recalculate() {
             const matIndex = materialSelect.value;
-            if (settings.materials.length === 0) {
+            if (settings.materials.length === 0 || matIndex === '') {
                 resultDiv.innerHTML = '<p>Добавьте материалы в настройках.</p>';
                 return;
             }
@@ -413,8 +380,11 @@
             resultDiv.dataset.finalPrice = finalPrice.toFixed(2);
         }
 
-        // ---------- Отправка в чат ----------
         sendBtn.addEventListener('click', () => {
+            if (!tg || !tg.sendData) {
+                alert('Кнопка работает только внутри Telegram Mini App.');
+                return;
+            }
             const finalPrice = resultDiv.dataset.finalPrice;
             const matIndex = materialSelect.value;
             const mat = settings.materials[matIndex];
@@ -430,13 +400,11 @@
             tg.showPopup({ title: 'Готово', message: 'Расчёт отправлен.' });
         });
 
-        // ---------- События изменения параметров ----------
         materialSelect.addEventListener('change', recalculate);
         weightInput.addEventListener('input', recalculate);
         timeInput.addEventListener('input', recalculate);
         marginSelect.addEventListener('change', recalculate);
 
-        // ---------- Вкладки ----------
         document.querySelectorAll('.tab').forEach(tab => {
             tab.addEventListener('click', () => {
                 document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
@@ -451,7 +419,6 @@
             });
         });
 
-        // ---------- Кнопки настроек ----------
         document.getElementById('showAddMaterial').addEventListener('click', () => {
             addMaterialForm.style.display = 'block';
             delete addMaterialForm.dataset.editIndex;
@@ -467,15 +434,12 @@
             delete addMaterialForm.dataset.editIndex;
         });
 
-        // Автосохранение глобальных параметров при изменении
         [powerInput, tariffInput, amortInput].forEach(input => {
             input.addEventListener('change', saveGlobalParams);
         });
 
-        // Инициализация
         updateMaterialSelect();
         recalculate();
-        tg.ready();
     </script>
 </body>
 </html>
