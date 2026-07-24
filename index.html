@@ -144,10 +144,11 @@
                 </div>
                 <div class="form-group">
                     <label>Цвет</label>
-                    <div style="display:flex; gap:10px; align-items:center;">
+                    <div style="display:flex; gap:10px; align-items:center; flex-wrap: wrap;">
                         <input type="color" id="newColorPicker" value="#ff0000" style="width:60px; padding:0;">
                         <input type="text" id="newColorText" placeholder="Название или HEX" style="flex:1;">
                         <button type="button" class="small" id="ralBtn">🎨 RAL</button>
+                        <input type="text" id="ralCodeInput" placeholder="RAL код, напр. 9005" style="width:100px;" class="hidden">
                     </div>
                     <div id="ralPicker" class="hidden">
                         <select id="ralSelect"><option value="">-- Выберите RAL --</option></select>
@@ -160,7 +161,7 @@
                     </div>
                     <div class="form-group">
                         <label>Вес упак. (г)</label>
-                        <input type="number" id="newWeight" step="1" min="1" value="250">
+                        <input type="number" id="newWeight" step="1" min="1" value="1000">
                     </div>
                 </div>
                 <button id="saveNewMaterial">💾 Сохранить</button>
@@ -245,20 +246,19 @@
             return closest;
         }
 
-        const ralColors = [
-            {ral:"RAL 1000",name:"Зелёно-бежевый",hex:"#BEBD7F"},
-            {ral:"RAL 1001",name:"Бежевый",hex:"#C2B078"},
-            {ral:"RAL 1011",name:"Коричнево-бежевый",hex:"#A57C5A"},
-            {ral:"RAL 2004",name:"Оранжевый",hex:"#E25303"},
-            {ral:"RAL 3000",name:"Огненно-красный",hex:"#A72920"},
-            {ral:"RAL 4006",name:"Фиолетовый",hex:"#993366"},
-            {ral:"RAL 5005",name:"Синий",hex:"#1E2460"},
-            {ral:"RAL 6001",name:"Изумрудно-зелёный",hex:"#28713D"},
-            {ral:"RAL 7004",name:"Серый",hex:"#9B9B9B"},
-            {ral:"RAL 9005",name:"Чёрный",hex:"#0A0A0A"},
-            {ral:"RAL 9010",name:"Белый",hex:"#F4F4F4"},
-            {ral:"RAL 9017",name:"Транспортный чёрный",hex:"#2B2B2B"}
-        ];
+        // Расширенный список RAL (код -> HEX, название)
+        const ralMap = {
+            "1000": "#BEBD7F", "1001": "#C2B078", "1011": "#A57C5A",
+            "2004": "#E25303", "3000": "#A72920", "4006": "#993366",
+            "5005": "#1E2460", "6001": "#28713D", "7004": "#9B9B9B",
+            "9005": "#0A0A0A", "9010": "#F4F4F4", "9017": "#2B2B2B"
+        };
+        const ralNames = {
+            "1000": "Зелёно-бежевый", "1001": "Бежевый", "1011": "Коричнево-бежевый",
+            "2004": "Оранжевый", "3000": "Огненно-красный", "4006": "Фиолетовый",
+            "5005": "Синий", "6001": "Изумрудно-зелёный", "7004": "Серый",
+            "9005": "Чёрный", "9010": "Белый", "9017": "Транспортный чёрный"
+        };
 
         // ========== Управление справочниками и статистикой ==========
         const DEFAULT_BRANDS = ["eSUN","BestFilament","Devil Design","Fiberlogy","Gembird","Creality","Hatchbox","Polymaker","Prusament"];
@@ -289,7 +289,7 @@
         function saveBrands() { saveDict('customBrands', customBrands); }
         function saveTypes() { saveDict('customTypes', customTypes); }
 
-        // ========== Построение выпадающих списков брендов/типов с учётом статистики ==========
+        // ========== Построение выпадающих списков брендов/типов ==========
         function populateBrandSelect() {
             brandSelect.innerHTML = '<option value="">-- Выберите бренд --</option>';
             const sorted = [...customBrands].sort((a,b) => {
@@ -379,9 +379,9 @@
             tariff: 0.25,
             amortization: 10.0,
             materials: [
-                {brand:"eSUN", type:"PLA+", series:"Pro", color:"#FF5733", pricePerPackage:30, packageWeight:250},
-                {brand:"BestFilament", type:"ABS", series:"", color:"#33FF57", pricePerPackage:45, packageWeight:1000},
-                {brand:"Fiberlogy", type:"PETG", series:"Easy", color:"#3357FF", pricePerPackage:55, packageWeight:1000}
+                {brand:"eSUN", type:"PLA+", series:"Pro", color:"#FF5733", colorName:"красный", pricePerPackage:30, packageWeight:250},
+                {brand:"BestFilament", type:"ABS", series:"", color:"#33FF57", colorName:"зелёный", pricePerPackage:45, packageWeight:1000},
+                {brand:"Fiberlogy", type:"PETG", series:"Easy", color:"#3357FF", colorName:"синий", pricePerPackage:55, packageWeight:1000}
             ]
         };
 
@@ -414,6 +414,7 @@
         const ralBtn = document.getElementById('ralBtn');
         const ralPicker = document.getElementById('ralPicker');
         const ralSelect = document.getElementById('ralSelect');
+        const ralCodeInput = document.getElementById('ralCodeInput');
         const newPrice = document.getElementById('newPrice');
         const newWeight = document.getElementById('newWeight');
         const powerInput = document.getElementById('powerInput');
@@ -433,11 +434,13 @@
         brandSelect.addEventListener('change', () => toggleOther(brandSelect, newBrandOther));
         typeSelect.addEventListener('change', () => toggleOther(typeSelect, newTypeOther));
 
-        // ========== Выбор цвета: автоназвание и RAL ==========
+        // ========== Работа с цветом ==========
+        // Автоназвание при выборе в палитре
         newColorPicker.addEventListener('input', () => {
             const hex = newColorPicker.value;
             newColorText.value = findClosestColorName(hex);
         });
+        // При вводе HEX или названия
         newColorText.addEventListener('change', () => {
             const val = newColorText.value.trim();
             if (/^#[0-9a-fA-F]{6}$/.test(val)) {
@@ -446,27 +449,40 @@
             }
         });
 
+        // RAL: кнопка "RAL" показывает/скрывает панель с выбором из списка или вводом кода
         ralBtn.addEventListener('click', () => {
             ralPicker.classList.toggle('hidden');
+            ralCodeInput.classList.toggle('hidden');
             if (!ralPicker.classList.contains('hidden') && ralSelect.options.length <= 1) {
-                ralColors.forEach(c => {
+                Object.entries(ralMap).forEach(([code, hex]) => {
                     const opt = document.createElement('option');
-                    opt.value = c.hex;
-                    opt.textContent = `${c.ral} ${c.name}`;
+                    opt.value = code;
+                    opt.textContent = `RAL ${code} — ${ralNames[code] || ''}`;
+                    opt.dataset.hex = hex;
                     ralSelect.appendChild(opt);
                 });
             }
         });
+        // Выбор из выпадающего списка RAL
         ralSelect.addEventListener('change', () => {
             if (ralSelect.value) {
-                const hex = ralSelect.value;
+                const code = ralSelect.value;
+                const hex = ralMap[code];
                 newColorPicker.value = hex;
-                const selectedOption = ralSelect.options[ralSelect.selectedIndex];
-                newColorText.value = selectedOption.textContent.split(' ').slice(1).join(' ');
+                newColorText.value = ralNames[code] || `RAL ${code}`;
+            }
+        });
+        // Прямой ввод RAL кода
+        ralCodeInput.addEventListener('input', () => {
+            const code = ralCodeInput.value.trim();
+            if (ralMap[code]) {
+                const hex = ralMap[code];
+                newColorPicker.value = hex;
+                newColorText.value = ralNames[code] || `RAL ${code}`;
             }
         });
 
-        // ========== Обновление списка материалов в расчёте ==========
+        // ========== Обновление выпадающего списка материалов (с цветом) ==========
         function updateMaterialSelect() {
             materialSelect.innerHTML = '';
             if (settings.materials.length === 0) {
@@ -479,7 +495,10 @@
                 const opt = document.createElement('option');
                 opt.value = index;
                 const ppg = (mat.pricePerPackage / mat.packageWeight).toFixed(3);
-                opt.textContent = `${mat.brand} ${mat.type}${mat.series?' '+mat.series:''} — ${ppg} Br/г`;
+                // Добавляем цветной индикатор и название цвета
+                const colorHex = mat.color || '#ccc';
+                const colorName = mat.colorName || findClosestColorName(colorHex);
+                opt.innerHTML = `● <span style="color:${colorHex};">■</span> ${mat.brand} ${mat.type} ${mat.series} (${colorName}) — ${ppg} Br/г`;
                 materialSelect.appendChild(opt);
             });
         }
@@ -488,12 +507,15 @@
             materialsListDiv.innerHTML = '';
             settings.materials.forEach((mat, index) => {
                 const ppg = (mat.pricePerPackage / mat.packageWeight).toFixed(3);
+                const colorHex = mat.color || '#ccc';
+                const colorName = mat.colorName || findClosestColorName(colorHex);
                 const div = document.createElement('div');
                 div.className = 'material-item';
                 div.innerHTML = `
                     <div class="material-info">
-                        <span class="material-color" style="background:${mat.color||'#ccc'}"></span>
-                        <strong>${mat.brand} ${mat.type} ${mat.series}</strong><br>
+                        <span class="material-color" style="background:${colorHex}"></span>
+                        <strong>${mat.brand} ${mat.type} ${mat.series}</strong> 
+                        (${colorName})<br>
                         <small>Цена: ${mat.pricePerPackage} Br / ${mat.packageWeight} г (≈${ppg} Br/г)</small>
                     </div>
                     <div>
@@ -502,6 +524,7 @@
                     </div>`;
                 materialsListDiv.appendChild(div);
             });
+            // Обработчики удаления и редактирования
             document.querySelectorAll('.delete-material').forEach(b => {
                 b.addEventListener('click', (e) => {
                     const idx = e.target.dataset.index;
@@ -534,11 +557,13 @@
                     }
                     newSeries.value = m.series || '';
                     newColorPicker.value = m.color || '#ff0000';
-                    newColorText.value = m.color || '';
+                    newColorText.value = m.colorName || findClosestColorName(m.color);
                     newPrice.value = m.pricePerPackage;
                     newWeight.value = m.packageWeight;
                     addMaterialForm.style.display = 'block';
                     addMaterialForm.dataset.editIndex = idx;
+                    ralPicker.classList.add('hidden');
+                    ralCodeInput.classList.add('hidden');
                 });
             });
         }
@@ -549,25 +574,30 @@
             let type = typeSelect.value;
             if (type === 'other') type = newTypeOther.value.trim();
             const series = newSeries.value.trim();
-            const color = newColorText.value.trim() || newColorPicker.value;
+            const colorHex = newColorPicker.value;
+            const colorName = newColorText.value.trim() || findClosestColorName(colorHex);
             const price = parseFloat(newPrice.value);
             const weight = parseFloat(newWeight.value);
             if (!brand || !type || isNaN(price) || price<=0 || isNaN(weight) || weight<=0) {
                 alert('Заполните бренд, тип, цену и вес корректно.');
                 return;
             }
-            const material = { brand, type, series, color, pricePerPackage: price, packageWeight: weight };
+            const material = {
+                brand, type, series,
+                color: colorHex,
+                colorName,
+                pricePerPackage: price,
+                packageWeight: weight
+            };
             const editIdx = addMaterialForm.dataset.editIndex;
             if (editIdx !== undefined && editIdx !== '') {
                 settings.materials[editIdx] = material;
             } else {
                 settings.materials.push(material);
-                // Увеличиваем счётчики использования, только если бренд/тип есть в справочнике (или добавляем)
                 incrementUsage('brandUsage', brand);
                 brandUsage = getUsage('brandUsage');
                 incrementUsage('typeUsage', type);
                 typeUsage = getUsage('typeUsage');
-                // Если такого бренда/типа нет в справочнике — автоматически добавляем
                 if (!customBrands.includes(brand)) {
                     customBrands.push(brand);
                     saveBrands();
@@ -584,9 +614,12 @@
             brandSelect.value = ''; newBrandOther.classList.add('hidden'); newBrandOther.value='';
             typeSelect.value = ''; newTypeOther.classList.add('hidden'); newTypeOther.value='';
             newSeries.value = ''; newColorPicker.value = '#ff0000'; newColorText.value = '';
-            newPrice.value = '30'; newWeight.value = '250';
+            newPrice.value = '30';
+            newWeight.value = '1000'; // обновляем до 1000 г
             addMaterialForm.style.display = 'none';
             delete addMaterialForm.dataset.editIndex;
+            ralPicker.classList.add('hidden');
+            ralCodeInput.classList.add('hidden');
             renderMaterialsList();
             updateMaterialSelect();
             recalculate();
@@ -612,9 +645,12 @@
             const finalPrice = costPrice * margin;
             weightValue.textContent = weight;
             timeValue.textContent = time.toFixed(1);
+            const colorHex = mat.color || '#ccc';
+            const colorName = mat.colorName || findClosestColorName(colorHex);
             resultDiv.innerHTML = `
                 <strong>📊 Детали расчёта</strong><br>
-                ▪ Материал: ${mat.brand} ${mat.type} ${mat.series} (${ppg.toFixed(3)} Br/г)<br>
+                ▪ Материал: ${mat.brand} ${mat.type} ${mat.series} 
+                <span style="color:${colorHex};">■</span> ${colorName} (${ppg.toFixed(3)} Br/г)<br>
                 ▪ Вес: ${weight} г → ${plasticCost.toFixed(2)} Br<br>
                 ▪ Время: ${time.toFixed(1)} ч<br>
                 ▪ Электричество: ${electricityCost.toFixed(2)} Br<br>
@@ -633,7 +669,7 @@
             const mat = settings.materials[idx];
             const data = {
                 material: `${mat.brand} ${mat.type} ${mat.series}`,
-                color: mat.color,
+                color: mat.colorName || mat.color,
                 weight: weightInput.value,
                 time: timeInput.value,
                 margin: marginSelect.value,
@@ -675,6 +711,7 @@
             });
         });
 
+        // Обработчик открытия формы добавления
         document.getElementById('showAddMaterial').addEventListener('click', () => {
             populateBrandSelect();
             populateTypeSelect();
@@ -682,9 +719,13 @@
             delete addMaterialForm.dataset.editIndex;
             brandSelect.value = ''; newBrandOther.classList.add('hidden'); newBrandOther.value = '';
             typeSelect.value = ''; newTypeOther.classList.add('hidden'); newTypeOther.value = '';
-            newSeries.value = ''; newColorPicker.value = '#ff0000'; newColorText.value = '';
-            newPrice.value = '30'; newWeight.value = '250';
+            newSeries.value = '';
+            newColorPicker.value = '#ff0000';
+            newColorText.value = '';
+            newPrice.value = '30';
+            newWeight.value = '1000';
             ralPicker.classList.add('hidden');
+            ralCodeInput.classList.add('hidden');
         });
 
         document.getElementById('saveNewMaterial').addEventListener('click', saveMaterial);
