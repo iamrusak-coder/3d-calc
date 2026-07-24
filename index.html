@@ -115,7 +115,8 @@
             padding: 16px;
             margin-top: 16px;
         }
-        .add-material-form input {
+        .add-material-form input,
+        .add-material-form select {
             margin-bottom: 10px;
         }
         .two-cols {
@@ -123,6 +124,7 @@
             gap: 10px;
         }
         .two-cols > * { flex: 1; }
+        .hidden { display: none; }
     </style>
 </head>
 <body>
@@ -178,16 +180,48 @@
             <div class="add-material-form" id="addMaterialForm" style="display:none;">
                 <div class="form-group">
                     <label>Бренд</label>
-                    <input type="text" id="newBrand" placeholder="eSUN">
+                    <select id="brandSelect">
+                        <option value="">-- Выберите бренд --</option>
+                        <option value="eSUN">eSUN</option>
+                        <option value="BestFilament">BestFilament</option>
+                        <option value="Devil Design">Devil Design</option>
+                        <option value="Fiberlogy">Fiberlogy</option>
+                        <option value="Gembird">Gembird</option>
+                        <option value="Creality">Creality</option>
+                        <option value="Hatchbox">Hatchbox</option>
+                        <option value="Polymaker">Polymaker</option>
+                        <option value="Prusament">Prusament</option>
+                        <option value="other">Другое...</option>
+                    </select>
+                    <input type="text" id="newBrandOther" class="hidden" placeholder="Введите бренд">
                 </div>
+
                 <div class="form-group">
                     <label>Тип</label>
-                    <input type="text" id="newType" placeholder="PLA">
+                    <select id="typeSelect">
+                        <option value="">-- Выберите тип --</option>
+                        <option value="PLA">PLA</option>
+                        <option value="PLA+">PLA+</option>
+                        <option value="ABS">ABS</option>
+                        <option value="PETG">PETG</option>
+                        <option value="TPU">TPU</option>
+                        <option value="ASA">ASA</option>
+                        <option value="Nylon">Nylon</option>
+                        <option value="PC">PC</option>
+                        <option value="HIPS">HIPS</option>
+                        <option value="PVA">PVA</option>
+                        <option value="Wood">Wood</option>
+                        <option value="Metal">Metal</option>
+                        <option value="other">Другое...</option>
+                    </select>
+                    <input type="text" id="newTypeOther" class="hidden" placeholder="Введите тип">
                 </div>
+
                 <div class="form-group">
-                    <label>Серия</label>
-                    <input type="text" id="newSeries" placeholder="Pro">
+                    <label>Серия (опционально)</label>
+                    <input type="text" id="newSeries" placeholder="Pro, Silk, Easy...">
                 </div>
+
                 <div class="form-group">
                     <label>Цвет (название или HEX)</label>
                     <div style="display:flex; gap:10px;">
@@ -195,6 +229,7 @@
                         <input type="text" id="newColorText" placeholder="красный" style="flex:1;">
                     </div>
                 </div>
+
                 <div class="two-cols">
                     <div class="form-group">
                         <label>Цена за упак. (Br)</label>
@@ -205,6 +240,7 @@
                         <input type="number" id="newWeight" step="1" min="1" value="250">
                     </div>
                 </div>
+
                 <button id="saveNewMaterial">💾 Сохранить</button>
                 <button id="cancelAddMaterial" class="danger">Отмена</button>
             </div>
@@ -242,16 +278,16 @@
         // ---------- Настройки по умолчанию ----------
         const DEFAULT_SETTINGS = {
             power: 0.15,
-            tariff: 0.25,        // Br за кВт·ч (пример для Беларуси)
-            amortization: 10.0,  // Br/час
+            tariff: 0.25,
+            amortization: 10.0,
             materials: [
                 {
                     brand: "eSUN",
                     type: "PLA+",
                     series: "Pro",
                     color: "#FF5733",
-                    pricePerPackage: 30,   // Br
-                    packageWeight: 250     // грамм
+                    pricePerPackage: 30,
+                    packageWeight: 250
                 },
                 {
                     brand: "BestFilament",
@@ -299,10 +335,35 @@
         const materialsListDiv = document.getElementById('materialsList');
         const addMaterialForm = document.getElementById('addMaterialForm');
 
+        // Поля формы материала
+        const brandSelect = document.getElementById('brandSelect');
+        const newBrandOther = document.getElementById('newBrandOther');
+        const typeSelect = document.getElementById('typeSelect');
+        const newTypeOther = document.getElementById('newTypeOther');
+        const newSeries = document.getElementById('newSeries');
+        const newColorPicker = document.getElementById('newColorPicker');
+        const newColorText = document.getElementById('newColorText');
+        const newPrice = document.getElementById('newPrice');
+        const newWeight = document.getElementById('newWeight');
+
         // Поля настроек
         const powerInput = document.getElementById('powerInput');
         const tariffInput = document.getElementById('tariffInput');
         const amortInput = document.getElementById('amortInput');
+
+        // ---------- Логика показа/скрытия поля "Другое" ----------
+        function toggleOtherField(selectElem, otherInputElem) {
+            if (selectElem.value === 'other') {
+                otherInputElem.classList.remove('hidden');
+                otherInputElem.focus();
+            } else {
+                otherInputElem.classList.add('hidden');
+                otherInputElem.value = '';
+            }
+        }
+
+        brandSelect.addEventListener('change', () => toggleOtherField(brandSelect, newBrandOther));
+        typeSelect.addEventListener('change', () => toggleOtherField(typeSelect, newTypeOther));
 
         // ---------- Обновление выпадающего списка материалов ----------
         function updateMaterialSelect() {
@@ -342,7 +403,6 @@
                 materialsListDiv.appendChild(div);
             });
 
-            // Обработчики удаления
             document.querySelectorAll('.delete-material').forEach(btn => {
                 btn.addEventListener('click', (e) => {
                     const index = e.target.dataset.index;
@@ -354,47 +414,59 @@
                 });
             });
 
-            // Обработчики редактирования
             document.querySelectorAll('.edit-material').forEach(btn => {
                 btn.addEventListener('click', (e) => {
                     const index = e.target.dataset.index;
                     const mat = settings.materials[index];
-                    document.getElementById('newBrand').value = mat.brand;
-                    document.getElementById('newType').value = mat.type;
-                    document.getElementById('newSeries').value = mat.series;
-                    document.getElementById('newColorPicker').value = mat.color || '#000000';
-                    document.getElementById('newColorText').value = mat.color || '';
-                    document.getElementById('newPrice').value = mat.pricePerPackage;
-                    document.getElementById('newWeight').value = mat.packageWeight;
+                    // Заполняем форму редактирования
+                    if (brandSelect.querySelector(`option[value="${mat.brand}"]`)) {
+                        brandSelect.value = mat.brand;
+                        newBrandOther.classList.add('hidden');
+                    } else {
+                        brandSelect.value = 'other';
+                        newBrandOther.classList.remove('hidden');
+                        newBrandOther.value = mat.brand;
+                    }
+                    if (typeSelect.querySelector(`option[value="${mat.type}"]`)) {
+                        typeSelect.value = mat.type;
+                        newTypeOther.classList.add('hidden');
+                    } else {
+                        typeSelect.value = 'other';
+                        newTypeOther.classList.remove('hidden');
+                        newTypeOther.value = mat.type;
+                    }
+                    newSeries.value = mat.series;
+                    newColorPicker.value = mat.color || '#ff0000';
+                    newColorText.value = mat.color || '';
+                    newPrice.value = mat.pricePerPackage;
+                    newWeight.value = mat.packageWeight;
                     addMaterialForm.style.display = 'block';
                     addMaterialForm.dataset.editIndex = index;
                 });
             });
         }
 
-        // ---------- Сохранение нового или отредактированного материала ----------
+        // ---------- Сохранение материала ----------
         function saveMaterial() {
-            const brand = document.getElementById('newBrand').value.trim();
-            const type = document.getElementById('newType').value.trim();
-            const series = document.getElementById('newSeries').value.trim();
-            const colorPicker = document.getElementById('newColorPicker').value;
-            const colorText = document.getElementById('newColorText').value.trim();
-            const price = parseFloat(document.getElementById('newPrice').value);
-            const weight = parseFloat(document.getElementById('newWeight').value);
+            let brand = brandSelect.value;
+            if (brand === 'other') {
+                brand = newBrandOther.value.trim();
+            }
+            let type = typeSelect.value;
+            if (type === 'other') {
+                type = newTypeOther.value.trim();
+            }
+            const series = newSeries.value.trim();
+            const color = newColorText.value.trim() || newColorPicker.value;
+            const price = parseFloat(newPrice.value);
+            const weight = parseFloat(newWeight.value);
 
             if (!brand || !type || isNaN(price) || price <= 0 || isNaN(weight) || weight <= 0) {
                 alert('Заполните бренд, тип, корректную цену и вес упаковки.');
                 return;
             }
-            const color = colorText || colorPicker;
-            const material = {
-                brand,
-                type,
-                series,
-                color,
-                pricePerPackage: price,
-                packageWeight: weight
-            };
+
+            const material = { brand, type, series, color, pricePerPackage: price, packageWeight: weight };
 
             const editIndex = addMaterialForm.dataset.editIndex;
             if (editIndex !== undefined && editIndex !== '') {
@@ -405,13 +477,17 @@
 
             saveSettings(settings);
             // Очистка формы
-            document.getElementById('newBrand').value = '';
-            document.getElementById('newType').value = '';
-            document.getElementById('newSeries').value = '';
-            document.getElementById('newColorPicker').value = '#ff0000';
-            document.getElementById('newColorText').value = '';
-            document.getElementById('newPrice').value = '30';
-            document.getElementById('newWeight').value = '250';
+            brandSelect.value = '';
+            newBrandOther.classList.add('hidden');
+            newBrandOther.value = '';
+            typeSelect.value = '';
+            newTypeOther.classList.add('hidden');
+            newTypeOther.value = '';
+            newSeries.value = '';
+            newColorPicker.value = '#ff0000';
+            newColorText.value = '';
+            newPrice.value = '30';
+            newWeight.value = '250';
             addMaterialForm.style.display = 'none';
             delete addMaterialForm.dataset.editIndex;
 
@@ -449,7 +525,6 @@
             const time = parseFloat(timeInput.value);
             const margin = parseFloat(marginSelect.value);
 
-            // Цена за грамм
             const pricePerGram = mat.pricePerPackage / mat.packageWeight;
             const plasticCost = weight * pricePerGram;
             const electricityCost = settings.power * time * settings.tariff;
@@ -510,11 +585,9 @@
                 const panelId = 'panel-' + tab.dataset.tab;
                 document.getElementById(panelId).classList.add('active');
 
-                // При открытии "Материалов" обновляем список
                 if (tab.dataset.tab === 'materials') {
                     renderMaterialsList();
                 }
-                // При открытии "Настроек" подгружаем текущие параметры
                 if (tab.dataset.tab === 'settings') {
                     loadGlobalParamsToForm();
                 }
@@ -525,13 +598,17 @@
         document.getElementById('showAddMaterial').addEventListener('click', () => {
             addMaterialForm.style.display = 'block';
             delete addMaterialForm.dataset.editIndex;
-            document.getElementById('newBrand').value = '';
-            document.getElementById('newType').value = '';
-            document.getElementById('newSeries').value = '';
-            document.getElementById('newColorPicker').value = '#ff0000';
-            document.getElementById('newColorText').value = '';
-            document.getElementById('newPrice').value = '30';
-            document.getElementById('newWeight').value = '250';
+            brandSelect.value = '';
+            newBrandOther.classList.add('hidden');
+            newBrandOther.value = '';
+            typeSelect.value = '';
+            newTypeOther.classList.add('hidden');
+            newTypeOther.value = '';
+            newSeries.value = '';
+            newColorPicker.value = '#ff0000';
+            newColorText.value = '';
+            newPrice.value = '30';
+            newWeight.value = '250';
         });
 
         document.getElementById('saveNewMaterial').addEventListener('click', saveMaterial);
