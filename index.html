@@ -7,23 +7,23 @@
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         :root {
-            --bg: rgba(255,255,255,0.15);
+            --bg: rgba(255,255,255,0.2);
             --text: #1c1c1e;
             --button: #007aff;
             --button-text: #ffffff;
             --glass: rgba(255,255,255,0.45);
             --glass-strong: rgba(255,255,255,0.65);
-            --border: rgba(255,255,255,0.4);
-            --shadow: 0 8px 32px rgba(0,0,0,0.08);
+            --border: rgba(255,255,255,0.5);
+            --shadow: 0 8px 32px rgba(0,0,0,0.1);
         }
         @media (prefers-color-scheme: dark) {
             :root {
                 --bg: rgba(28,28,30,0.3);
                 --text: #f5f5f7;
-                --glass: rgba(255,255,255,0.08);
-                --glass-strong: rgba(255,255,255,0.14);
-                --border: rgba(255,255,255,0.15);
-                --shadow: 0 8px 32px rgba(0,0,0,0.4);
+                --glass: rgba(255,255,255,0.1);
+                --glass-strong: rgba(255,255,255,0.18);
+                --border: rgba(255,255,255,0.2);
+                --shadow: 0 8px 32px rgba(0,0,0,0.5);
             }
         }
         * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -36,8 +36,7 @@
             color: var(--text);
             position: fixed;
             width: 100%;
-            overscroll-behavior: none;
-            -webkit-overflow-scrolling: none;
+            touch-action: none;
         }
 
         .background {
@@ -98,17 +97,15 @@
             background: var(--glass-strong);
             border-bottom-color: var(--button);
             color: var(--button);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
         }
 
         .tab-content {
             flex: 1;
             overflow-y: auto;
-            -webkit-overflow-scrolling: touch;
             overscroll-behavior: contain;
             padding: 20px 18px 24px;
             touch-action: pan-y;
+            -webkit-overflow-scrolling: touch;
         }
 
         .tab-panel { display: none; }
@@ -169,14 +166,17 @@
             width: 90%; max-width: 400px;
             border: 1px solid var(--border);
             box-shadow: var(--shadow);
-            color: var(--text);
+            color: #1c1c1e;
+        }
+        @media (prefers-color-scheme: dark) {
+            .modal-content { color: #f5f5f7; }
         }
         .modal-content h3 { margin-bottom: 16px; font-size: 1.3em; }
         .modal-content .form-group { margin-bottom: 14px; }
         .modal-content select, .modal-content input {
-            background: var(--glass);
+            background: rgba(255,255,255,0.3);
             border: 1px solid var(--border);
-            color: var(--text);
+            color: inherit;
         }
         input[type="range"] {
             width: 100%; padding: 0; height: 8px; background: var(--glass); border-radius: 4px;
@@ -188,7 +188,6 @@
             box-shadow: 0 2px 8px rgba(0,0,0,0.2);
         }
 
-        /* Карточки деталей и сводка */
         .part-card {
             background: var(--glass); border-radius: 20px; padding: 16px;
             margin-bottom: 16px; border: 1px solid var(--border);
@@ -237,10 +236,10 @@
 
                 <!-- Вкладка Материалы -->
                 <div class="tab-panel" id="panel-materials">
-                    <h3>🎨 Список материалов</h3>
-                    <button id="sortByType" class="small">По типу</button>
+                    <h3>🎨 Мои материалы</h3>
+                    <button id="sortAlphaBtn" class="small">По алфавиту</button>
                     <div id="materialsList"></div>
-                    <button id="showAddMaterial" class="primary">➕ Добавить материал</button>
+                    <button id="showAddMaterial" class="primary" style="margin-top:20px;">➕ Добавить материал</button>
                 </div>
 
                 <!-- Настройки -->
@@ -326,6 +325,13 @@
         const tg = window.Telegram?.WebApp;
         if (tg) { tg.ready(); tg.expand(); }
 
+        // Блокировка закрывающего свайпа
+        document.addEventListener('touchmove', function(e) {
+            if (!e.target.closest('.tab-content')) {
+                e.preventDefault();
+            }
+        }, { passive: false });
+
         const DEFAULT_BRANDS = ["eSUN","BestFilament","Devil Design","Fiberlogy"];
         const DEFAULT_TYPES = ["PLA","ABS","PETG","TPU"];
         const DEFAULT_SETTINGS = {
@@ -350,6 +356,7 @@
 
         function populateSelect(select, items, usage, otherOption = true) {
             select.innerHTML = '<option value="">-- выбрать --</option>';
+            if (!items || !Array.isArray(items)) return;
             [...items].sort((a,b) => (usage[b]||0)-(usage[a]||0) || a.localeCompare(b)).forEach(item => {
                 let opt = document.createElement('option'); opt.value = item; opt.textContent = item; select.appendChild(opt);
             });
@@ -359,8 +366,6 @@
         function populateAllSelects() {
             populateSelect(document.getElementById('matBrandSelect'), customBrands, brandUsage);
             populateSelect(document.getElementById('matTypeSelect'), customTypes, typeUsage);
-            populateSelect(document.getElementById('modalMaterialSelect'), null, null, false);
-            updatePartMaterialSelect();
         }
 
         function updatePartMaterialSelect() {
@@ -511,7 +516,6 @@
             renderMaterialsList();
         });
 
-        // Переключение "Другое" в селектах материала
         document.getElementById('matBrandSelect').addEventListener('change', function() {
             document.getElementById('matBrandOther').classList.toggle('hidden', this.value !== 'other');
         });
@@ -573,7 +577,7 @@
                 settings.materials.splice(e.target.dataset.idx, 1); saveAll(); updatePartMaterialSelect(); renderMaterialsList();
             }));
         }
-        document.getElementById('sortByType').addEventListener('click', () => {
+        document.getElementById('sortAlphaBtn').addEventListener('click', () => {
             settings.materials.sort((a,b) => a.type.localeCompare(b.type));
             saveAll(); updatePartMaterialSelect(); renderMaterialsList();
         });
