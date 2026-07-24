@@ -79,7 +79,7 @@
 
         .form-group { margin-bottom: 18px; }
         label { display: block; margin-bottom: 6px; font-weight: 600; font-size: 0.95em; }
-        select, input[type="range"], input[type="number"], input[type="text"], input[type="color"] {
+        select, input[type="number"], input[type="text"], input[type="color"] {
             width: 100%; padding: 12px 14px; border-radius: 18px;
             border: 1px solid var(--border);
             background: var(--glass-strong);
@@ -88,16 +88,6 @@
             transition: all 0.2s; outline: none;
         }
         select:focus, input:focus { border-color: var(--button); box-shadow: 0 0 0 3px rgba(0,122,255,0.2); }
-        input[type="range"] {
-            padding: 0; height: 8px; background: var(--glass); border-radius: 4px;
-            -webkit-appearance: none;
-        }
-        input[type="range"]::-webkit-slider-thumb {
-            -webkit-appearance: none; width: 24px; height: 24px;
-            background: var(--button); border-radius: 50%; cursor: pointer;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-        }
-        .range-labels { display: flex; justify-content: space-between; font-size: 12px; opacity: 0.7; margin-top: 4px; }
         button {
             background: var(--glass-strong);
             color: var(--text);
@@ -118,11 +108,6 @@
             margin-bottom: 10px; flex-wrap: wrap;
             backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
             border: 1px solid var(--border);
-        }
-        .material-color {
-            display: inline-block; width: 20px; height: 20px;
-            border-radius: 50%; margin-right: 10px; vertical-align: middle;
-            border: 1px solid rgba(0,0,0,0.2);
         }
         .add-material-form, .dict-form {
             background: var(--glass); border-radius: 24px; padding: 20px; margin-top: 20px;
@@ -146,7 +131,7 @@
             background: var(--glass); padding: 10px; border-radius: 16px;
             margin-bottom: 10px; border: 1px solid var(--border);
         }
-        .part-item span { flex: 1; }
+        .part-item input[type="number"] { width: 80px; padding: 8px; }
     </style>
 </head>
 <body>
@@ -182,7 +167,6 @@
                 </select>
             </div>
             <div class="result" id="result"></div>
-            <button id="sendBtn" class="primary">📤 Отправить расчёт в чат</button>
             <button id="shareBtn">📋 Поделиться</button>
             <button id="saveOrderBtn">💾 Сохранить заказ</button>
             <button id="loadOrderBtn">📂 Загрузить из архива</button>
@@ -226,7 +210,7 @@
             </div>
         </div>
 
-        <!-- Настройки и справочники (сокращённо) -->
+        <!-- Настройки -->
         <div class="tab-panel" id="panel-settings">
             <h3>🔧 Глобальные параметры</h3>
             <div class="form-group"><label>Мощность (кВт)</label><input type="number" id="powerInput" value="0.15" step="0.01"></div>
@@ -234,6 +218,7 @@
             <div class="form-group"><label>Амортизация (Br/ч)</label><input type="number" id="amortInput" value="10.0" step="0.1"></div>
             <button id="resetSettings" class="danger">🔄 Сбросить настройки</button>
         </div>
+        <!-- Справочники -->
         <div class="tab-panel" id="panel-dictionaries">
             <h3>📋 Бренды и типы</h3>
             <div class="form-group"><label>Бренды</label><div id="brandsList"></div><input type="text" id="newBrandInput" placeholder="Новый бренд"><button id="addBrandBtn" class="small">Добавить</button></div>
@@ -300,26 +285,61 @@
             let c = document.getElementById('partsContainer'); c.innerHTML = '';
             parts.forEach((p,i) => {
                 let d = document.createElement('div'); d.className = 'part-item';
-                d.innerHTML = `<span>${p.mat.brand} ${p.mat.type} — ${p.weight}г / ${p.time}ч</span>
-                               <button class="small danger remove-part" data-idx="${i}">✕</button>`;
+                d.dataset.index = i;
+                d.innerHTML = `
+                    <div style="flex:1;">
+                        <strong>${p.mat.brand} ${p.mat.type}</strong>
+                    </div>
+                    <div style="display:flex; gap:8px; align-items:center;">
+                        <label>Вес (г)</label>
+                        <input type="number" class="part-weight" value="${p.weight}" min="0" step="1" style="width:70px;">
+                        <label>Время (ч)</label>
+                        <input type="number" class="part-time" value="${p.time}" min="0" step="0.1" style="width:70px;">
+                        <button class="small danger remove-part">✕</button>
+                    </div>`;
                 c.appendChild(d);
             });
-            document.querySelectorAll('.remove-part').forEach(b => b.addEventListener('click', e => {
-                parts.splice(e.target.dataset.idx, 1); renderParts(); recalc();
-            }));
+
+            c.oninput = function(e) {
+                if (e.target.classList.contains('part-weight') || e.target.classList.contains('part-time')) {
+                    const itemDiv = e.target.closest('.part-item');
+                    const idx = itemDiv.dataset.index;
+                    const weightInput = itemDiv.querySelector('.part-weight');
+                    const timeInput = itemDiv.querySelector('.part-time');
+                    parts[idx].weight = parseFloat(weightInput.value) || 0;
+                    parts[idx].time = parseFloat(timeInput.value) || 0;
+                    recalc();
+                }
+            };
+
+            c.onclick = function(e) {
+                if (e.target.classList.contains('remove-part')) {
+                    const itemDiv = e.target.closest('.part-item');
+                    const idx = itemDiv.dataset.index;
+                    parts.splice(idx, 1);
+                    renderParts();
+                    recalc();
+                }
+            };
         }
 
         function recalc() {
             if (!parts.length) { document.getElementById('result').innerHTML = '<p>Добавьте детали.</p>'; return; }
             let margin = parseFloat(document.getElementById('marginSelect').value);
             let totalCost = 0;
+            let details = '';
             parts.forEach(p => {
                 let ppg = p.mat.pricePerPackage / p.mat.packageWeight;
-                totalCost += p.weight * ppg + settings.power * p.time * settings.tariff + settings.amortization * p.time;
+                let plasticCost = p.weight * ppg;
+                let electricityCost = settings.power * p.time * settings.tariff;
+                let amortization = settings.amortization * p.time;
+                let partTotal = plasticCost + electricityCost + amortization;
+                totalCost += partTotal;
+                details += `▪ ${p.mat.brand} ${p.mat.type} — ${p.weight}г × ${ppg.toFixed(2)} Br/г = ${plasticCost.toFixed(2)} Br (эл. ${electricityCost.toFixed(2)} Br, ам. ${amortization.toFixed(2)} Br)<br>`;
             });
             let final = totalCost * margin;
             let result = document.getElementById('result');
-            result.innerHTML = `<strong>📊 Сводка</strong><br>${parts.map(p => `▪ ${p.mat.brand} ${p.mat.type} — ${p.weight}г × ${(p.mat.pricePerPackage/p.mat.packageWeight).toFixed(2)} Br/г`).join('<br>')}<br>▪ Себестоимость: ${totalCost.toFixed(2)} Br<br><div class="price">💰 Итого: ${final.toFixed(2)} Br</div>`;
+            result.innerHTML = `<strong>📊 Подробный расчёт</strong><br>${details}<br>▪ Себестоимость всего: ${totalCost.toFixed(2)} Br<br><div class="price">💰 Итого к оплате: ${final.toFixed(2)} Br</div>`;
             result.dataset.final = final.toFixed(2);
         }
 
@@ -329,7 +349,8 @@
             if (idx === '') { alert('Выберите материал'); return; }
             let mat = settings.materials[idx];
             parts.push({ mat, weight: 100, time: 1 });
-            renderParts(); recalc();
+            renderParts();
+            recalc();
         }
 
         function saveOrder() {
@@ -371,22 +392,14 @@
             }));
         }
 
+        // Кнопки расчёта
         document.getElementById('addPartBtn').addEventListener('click', addPart);
         document.getElementById('saveOrderBtn').addEventListener('click', saveOrder);
         document.getElementById('loadOrderBtn').addEventListener('click', loadArchive);
         document.getElementById('marginSelect').addEventListener('change', recalc);
-        document.getElementById('sendBtn').addEventListener('click', () => {
-            if (!tg?.sendData) return alert('Только в Telegram');
-            tg.sendData(JSON.stringify({
-                order: document.getElementById('orderName').value,
-                parts: parts.map(p => ({ material: `${p.mat.brand} ${p.mat.type}`, weight: p.weight, time: p.time })),
-                final_price: document.getElementById('result').dataset.final + ' Br'
-            }));
-            tg.showPopup({ title: 'Готово', message: 'Заказ отправлен' });
-        });
         document.getElementById('shareBtn').addEventListener('click', () => {
             let text = `Заказ: ${document.getElementById('orderName').value}\n` +
-                       parts.map(p => `▪ ${p.mat.brand} ${p.mat.type} — ${p.weight}г`).join('\n') +
+                       parts.map(p => `▪ ${p.mat.brand} ${p.mat.type} — ${p.weight}г / ${p.time}ч`).join('\n') +
                        `\n💰 Итого: ${document.getElementById('result').dataset.final} Br`;
             if (navigator.share) navigator.share({ title: 'Расчёт 3D-печати', text });
             else { navigator.clipboard.writeText(text); alert('Скопировано'); }
@@ -475,7 +488,7 @@
         document.getElementById('tariffInput').addEventListener('change', function() { settings.tariff = +this.value; saveAll(); recalc(); });
         document.getElementById('amortInput').addEventListener('change', function() { settings.amortization = +this.value; saveAll(); recalc(); });
         document.getElementById('resetSettings').addEventListener('click', () => {
-            if (!confirm('Сбросить всё?')) return;
+            if (!confirm('Сбросить все настройки и материалы?')) return;
             ['settings','brands','types','brandUsage','typeUsage','orders'].forEach(k => localStorage.removeItem(k));
             location.reload();
         });
