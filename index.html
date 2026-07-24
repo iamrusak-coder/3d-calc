@@ -28,10 +28,12 @@
         }
         * { box-sizing: border-box; margin: 0; padding: 0; }
 
-        body {
-            height: 100vh;
-            width: 100vw;
+        html, body {
+            width: 100%;
+            height: 100%;
+            position: fixed;
             overflow: hidden;
+            touch-action: none;
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background: var(--bg);
             backdrop-filter: blur(40px) saturate(180%);
@@ -41,10 +43,7 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            padding: env(safe-area-inset-top, 12px) 12px env(safe-area-inset-bottom, 12px) 12px;
-            position: fixed;
-            top: 0;
-            left: 0;
+            padding: env(safe-area-inset-top, 4px) 8px env(safe-area-inset-bottom, 4px) 8px;
         }
 
         .app-container {
@@ -54,7 +53,7 @@
             display: flex;
             flex-direction: column;
             background: var(--glass);
-            border-radius: 32px;
+            border-radius: 28px;
             backdrop-filter: blur(30px) saturate(180%);
             -webkit-backdrop-filter: blur(30px) saturate(180%);
             border: 1px solid var(--border);
@@ -64,9 +63,9 @@
 
         .tabs-header {
             display: flex;
-            gap: 4px;
+            gap: 2px;
             border-bottom: 2px solid var(--border);
-            padding: 16px 16px 0;
+            padding: 12px 12px 0;
             flex-shrink: 0;
             background: var(--glass-strong);
             backdrop-filter: blur(20px);
@@ -75,16 +74,16 @@
         .tab {
             flex: 1 0 auto;
             text-align: center;
-            padding: 10px 6px;
+            padding: 8px 4px;
             cursor: pointer;
             font-weight: 600;
             border-bottom: 3px solid transparent;
             transition: 0.2s;
-            font-size: 13px;
+            font-size: 12px;
             white-space: nowrap;
             background: transparent;
             color: var(--text);
-            border-radius: 12px 12px 0 0;
+            border-radius: 10px 10px 0 0;
         }
         .tab.active {
             background: var(--button);
@@ -96,22 +95,23 @@
             flex: 1;
             overflow-y: auto;
             overscroll-behavior: contain;
-            padding: 20px 18px 24px;
+            padding: 16px 14px 20px;
             -webkit-overflow-scrolling: touch;
+            touch-action: pan-y;
         }
 
         .tab-panel { display: none; }
         .tab-panel.active { display: block; }
 
-        h2 { text-align: center; margin-bottom: 20px; font-size: 1.5em; font-weight: 700; }
-        .form-group { margin-bottom: 18px; }
-        label { display: block; margin-bottom: 6px; font-weight: 600; font-size: 0.95em; }
+        h2 { text-align: center; margin-bottom: 16px; font-size: 1.3em; font-weight: 700; }
+        .form-group { margin-bottom: 14px; }
+        label { display: block; margin-bottom: 4px; font-weight: 600; font-size: 0.9em; }
         select, input[type="number"], input[type="text"], input[type="color"] {
-            width: 100%; padding: 12px 14px; border-radius: 18px;
+            width: 100%; padding: 10px 12px; border-radius: 16px;
             border: 1px solid var(--border);
             background: var(--glass-strong);
             backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
-            color: var(--text); font-size: 15px;
+            color: var(--text); font-size: 14px;
             transition: all 0.2s; outline: none;
         }
         select:focus, input:focus { border-color: var(--button); box-shadow: 0 0 0 3px rgba(0,122,255,0.2); }
@@ -120,25 +120,26 @@
             background: var(--glass-strong);
             color: var(--text);
             border: 1px solid var(--border);
-            padding: 14px; border-radius: 20px;
-            font-size: 16px; font-weight: 600;
-            width: 100%; margin: 8px 0;
+            padding: 12px; border-radius: 18px;
+            font-size: 15px; font-weight: 600;
+            width: 100%; margin: 6px 0;
             cursor: pointer;
             backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
             transition: all 0.2s;
         }
         button.primary { background: var(--button); color: var(--button-text); border: none; }
         button.danger { background: rgba(255,59,48,0.2); border-color: rgba(255,59,48,0.4); color: #ff3b30; }
-        button.small { width: auto; padding: 8px 16px; margin: 4px; font-size: 14px; border-radius: 14px; }
+        button.small { width: auto; padding: 6px 12px; margin: 3px; font-size: 13px; border-radius: 12px; }
 
         .material-item, .dict-item {
             display: flex; align-items: center; justify-content: space-between;
-            background: var(--glass); padding: 12px; border-radius: 16px;
-            margin-bottom: 10px; flex-wrap: wrap;
+            background: var(--glass); padding: 10px; border-radius: 14px;
+            margin-bottom: 8px; flex-wrap: wrap;
             backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
             border: 1px solid var(--border);
+            font-size: 14px;
         }
-        .two-cols { display: flex; gap: 12px; }
+        .two-cols { display: flex; gap: 10px; }
         .two-cols > * { flex: 1; }
         .hidden { display: none; }
 
@@ -153,39 +154,41 @@
         .modal-content {
             background: var(--glass-strong);
             backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px);
-            border-radius: 28px; padding: 24px;
-            width: 90%; max-width: 400px;
+            border-radius: 24px; padding: 20px;
+            width: 92%; max-width: 380px;
             border: 1px solid var(--border);
             box-shadow: var(--shadow);
             color: var(--text);
             max-height: 80vh;
             overflow-y: auto;
+            overscroll-behavior: contain;
         }
-        .modal-content h3 { margin-bottom: 16px; font-size: 1.3em; }
-        .modal-content .form-group { margin-bottom: 14px; }
+        .modal-content h3 { margin-bottom: 14px; font-size: 1.2em; }
+        .modal-content .form-group { margin-bottom: 12px; }
         .modal-content select, .modal-content input {
             background: var(--glass);
             border: 1px solid var(--border);
         }
         input[type="range"] {
-            width: 100%; padding: 0; height: 8px; background: var(--glass); border-radius: 4px;
+            width: 100%; padding: 0; height: 6px; background: var(--glass); border-radius: 3px;
             -webkit-appearance: none;
         }
         input[type="range"]::-webkit-slider-thumb {
-            -webkit-appearance: none; width: 24px; height: 24px;
+            -webkit-appearance: none; width: 22px; height: 22px;
             background: var(--button); border-radius: 50%; cursor: pointer;
             box-shadow: 0 2px 8px rgba(0,0,0,0.2);
         }
 
         .part-card {
-            background: var(--glass); border-radius: 20px; padding: 16px;
-            margin-bottom: 16px; border: 1px solid var(--border);
+            background: var(--glass); border-radius: 16px; padding: 12px;
+            margin-bottom: 12px; border: 1px solid var(--border);
             backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
+            font-size: 14px;
         }
-        .part-card h4 { margin-bottom: 8px; font-size: 1.1em; }
-        .detail-row { display: flex; justify-content: space-between; margin: 4px 0; }
-        .summary-block { background: var(--glass-strong); border-radius: 20px; padding: 16px; margin-top: 16px; }
-        .summary-block hr { border: 0.5px solid var(--border); margin: 12px 0; }
+        .part-card h4 { margin-bottom: 6px; font-size: 1em; }
+        .detail-row { display: flex; justify-content: space-between; margin: 3px 0; font-size: 13px; }
+        .summary-block { background: var(--glass-strong); border-radius: 16px; padding: 12px; margin-top: 12px; }
+        .summary-block hr { border: 0.5px solid var(--border); margin: 10px 0; }
     </style>
 </head>
 <body>
@@ -204,7 +207,7 @@
                 </div>
                 <button id="addPartBtn" class="primary">➕ Добавить деталь</button>
                 <div id="partsContainer" class="parts-list"></div>
-                <div class="form-group" style="margin-top:20px;">
+                <div class="form-group" style="margin-top:16px;">
                     <label>Наценка на заказ</label>
                     <select id="marginSelect">
                         <option value="1.0">×1.0 (без наценки)</option>
@@ -217,22 +220,19 @@
                 <button id="shareBtn">📋 Поделиться</button>
                 <button id="saveOrderBtn">💾 Сохранить заказ</button>
                 <button id="loadOrderBtn">📂 Загрузить из архива</button>
-                <div id="archiveList" class="hidden" style="margin-top:16px;"></div>
+                <div id="archiveList" class="hidden" style="margin-top:12px;"></div>
             </div>
             <div class="tab-panel" id="panel-materials">
                 <h3>🎨 Мои материалы</h3>
                 <div id="materialsList"></div>
-                <button id="showAddMaterial" class="primary" style="margin-top:20px;">➕ Добавить материал</button>
+                <button id="showAddMaterial" class="primary" style="margin-top:16px;">➕ Добавить материал</button>
             </div>
             <div class="tab-panel" id="panel-settings">
                 <h3>🔧 Глобальные параметры</h3>
                 <div class="form-group"><label>Мощность принтера (кВт)</label><input type="number" id="powerInput" value="0.15" step="0.01"></div>
                 <div class="form-group"><label>Тариф (Br/кВт·ч)</label><input type="number" id="tariffInput" value="0.25" step="0.01"></div>
-                <div class="form-group"><label>Амортизация принтера (Br/ч)</label><input type="number" id="amortInput" value="10.0" step="0.1"></div>
-                <hr style="border-color:var(--border); margin:20px 0;">
-                <h4>🧯 Сушилка филамента</h4>
+                <div class="form-group"><label>Амортизация (Br/ч)</label><input type="number" id="amortInput" value="10.0" step="0.1"></div>
                 <div class="form-group"><label>Мощность сушилки (кВт)</label><input type="number" id="dryerPower" value="0.3" step="0.01"></div>
-                <p style="font-size:0.9em; opacity:0.8;">Время сушки равно времени печати детали.</p>
                 <button id="saveSettingsBtn" class="primary">💾 Сохранить настройки</button>
             </div>
             <div class="tab-panel" id="panel-dictionaries">
@@ -254,12 +254,12 @@
             <div class="form-group">
                 <label>Вес (г): <span id="modalWeightValue">100</span></label>
                 <input type="range" id="modalWeightRange" min="1" max="2000" value="100" step="1">
-                <input type="number" id="modalWeightInput" value="100" min="1" max="2000" style="margin-top:8px;">
+                <input type="number" id="modalWeightInput" value="100" min="1" max="2000" style="margin-top:6px;">
             </div>
             <div class="form-group">
                 <label>Время (ч): <span id="modalTimeValue">4.0</span></label>
                 <input type="range" id="modalTimeRange" min="0.5" max="48" value="4" step="0.5">
-                <input type="number" id="modalTimeInput" value="4" min="0.5" max="48" step="0.5" style="margin-top:8px;">
+                <input type="number" id="modalTimeInput" value="4" min="0.5" max="48" step="0.5" style="margin-top:6px;">
             </div>
             <div class="two-cols">
                 <button id="modalCancelBtn" class="danger">Отмена</button>
@@ -275,12 +275,12 @@
             <div class="form-group">
                 <label>Бренд</label>
                 <select id="matBrandSelect"><option value="">-- Выберите бренд --</option></select>
-                <input type="text" id="matBrandOther" class="hidden" placeholder="Введите бренд">
+                <input type="text" id="matBrandOther" class="hidden" placeholder="Введите бренд" style="margin-top:6px;">
             </div>
             <div class="form-group">
                 <label>Тип филамента</label>
                 <select id="matTypeSelect"><option value="">-- Выберите тип --</option></select>
-                <input type="text" id="matTypeOther" class="hidden" placeholder="Введите тип">
+                <input type="text" id="matTypeOther" class="hidden" placeholder="Введите тип" style="margin-top:6px;">
             </div>
             <div class="form-group">
                 <label>Серия</label>
@@ -288,18 +288,15 @@
             </div>
             <div class="form-group">
                 <label>Цвет</label>
-                <div style="display:flex; gap:10px; margin-bottom:8px;">
-                    <input type="color" id="matColorPicker" value="#ff0000" style="width:60px; padding:0;">
+                <div style="display:flex; gap:8px; margin-bottom:6px;">
+                    <input type="color" id="matColorPicker" value="#ff0000" style="width:50px; padding:0;">
                     <input type="text" id="matColorText" placeholder="Название или HEX" style="flex:1;">
                 </div>
-                <button type="button" id="ralPaletteBtn" class="small">🎨 Выбрать RAL</button>
-                <div id="ralSearchBlock" class="hidden" style="margin-top:10px; background:var(--glass); border-radius:16px; padding:12px;">
-                    <div style="display:flex; gap:6px; margin-bottom:8px;">
-                        <input type="text" id="ralSearchInput" placeholder="Поиск RAL (код или название)" style="flex:1;">
-                        <button id="ralSearchBtn" class="small">Найти</button>
-                    </div>
-                    <div id="ralResults" style="max-height:200px; overflow-y:auto;"></div>
+                <div style="display:flex; gap:8px; align-items:center;">
+                    <input type="text" id="ralCodeInput" placeholder="Код RAL (например 4005)" style="flex:1;">
+                    <button type="button" id="ralSearchBtn" class="small">Найти RAL</button>
                 </div>
+                <div id="ralResult" style="font-size:13px; margin-top:4px;"></div>
             </div>
             <div class="two-cols">
                 <div class="form-group"><label>Стоимость (Br)</label><input type="number" id="matPrice" value="30" step="0.01" placeholder="30"></div>
@@ -316,7 +313,6 @@
         const tg = window.Telegram?.WebApp;
         if (tg) { tg.ready(); tg.expand(); }
 
-        // Полный каталог RAL Classic (216 цветов)
         const ralColorsFull = [
             {code:"RAL 1000", name:"Зелёно-бежевый", hex:"#BEBD7F"},
             {code:"RAL 1001", name:"Бежевый", hex:"#C2B078"},
@@ -536,8 +532,7 @@
         const DEFAULT_BRANDS = ["eSUN","BestFilament","Devil Design","Fiberlogy"];
         const DEFAULT_TYPES = ["PLA","ABS","PETG","TPU"];
         const DEFAULT_SETTINGS = {
-            power: 0.15, tariff: 0.25, amortization: 10.0,
-            dryerPower: 0.3,
+            power: 0.15, tariff: 0.25, amortization: 10.0, dryerPower: 0.3,
             materials: [
                 {brand:"eSUN", type:"PLA+", series:"Pro", color:"#FF5733", pricePerPackage:30, packageWeight:1000},
                 {brand:"BestFilament", type:"ABS", series:"", color:"#33FF57", pricePerPackage:45, packageWeight:1000}
@@ -594,9 +589,9 @@
                 let d = document.createElement('div'); d.className = 'part-item';
                 d.dataset.index = i;
                 d.innerHTML = `
-                    <div style="flex:1; font-weight:600;">${p.mat.brand} ${p.mat.type} ${p.mat.series||''}</div>
-                    <label>Вес(г)</label><input type="number" class="part-weight" value="${p.weight}" min="0">
-                    <label>Время(ч)</label><input type="number" class="part-time" value="${p.time}" min="0" step="0.1">
+                    <div style="flex:1; font-weight:600; font-size:13px;">${p.mat.brand} ${p.mat.type} ${p.mat.series||''}</div>
+                    <label style="font-size:12px;">Вес(г)</label><input type="number" class="part-weight" value="${p.weight}" min="0" style="width:60px; padding:6px; font-size:13px;">
+                    <label style="font-size:12px;">Время(ч)</label><input type="number" class="part-time" value="${p.time}" min="0" step="0.1" style="width:60px; padding:6px; font-size:13px;">
                     <button class="small danger remove-part">✕</button>`;
                 c.appendChild(d);
             });
@@ -623,10 +618,8 @@
             if (!parts.length) { document.getElementById('result').innerHTML = '<p>Добавьте детали.</p>'; return; }
             let margin = parseFloat(document.getElementById('marginSelect').value);
             let totalCost = 0;
-            let totalTime = 0;
             let details = '';
             parts.forEach(p => {
-                totalTime += p.time;
                 let ppg = p.mat.pricePerPackage / p.mat.packageWeight;
                 let plasticCost = p.weight * ppg;
                 let electricityCost = settings.power * p.time * settings.tariff;
@@ -641,33 +634,33 @@
                     <div class="detail-row"><span>💵 Пластик (${ppg.toFixed(3)} Br/г)</span><span>${plasticCost.toFixed(2)} Br</span></div>
                     <div class="detail-row"><span>⚡ Электричество</span><span>${electricityCost.toFixed(2)} Br</span></div>
                     <div class="detail-row"><span>🔧 Амортизация</span><span>${amortization.toFixed(2)} Br</span></div>
-                    <div class="detail-row" style="font-weight:600; margin-top:8px;"><span>📦 Сумма по детали</span><span>${partTotal.toFixed(2)} Br</span></div>
+                    <div class="detail-row" style="font-weight:600; margin-top:6px;"><span>📦 Сумма по детали</span><span>${partTotal.toFixed(2)} Br</span></div>
                 </div>`;
             });
 
+            let totalPrintTime = parts.reduce((sum, p) => sum + p.time, 0);
             let dryerCost = 0;
-            if (settings.dryerPower && totalTime > 0) {
-                dryerCost = settings.dryerPower * totalTime * settings.tariff;
+            if (settings.dryerPower && totalPrintTime > 0) {
+                dryerCost = settings.dryerPower * totalPrintTime * settings.tariff;
                 totalCost += dryerCost;
             }
 
             let final = totalCost * margin;
-            let dryerRow = dryerCost > 0 ? `<div class="detail-row"><span>🧯 Сушка филамента (${totalTime.toFixed(1)} ч)</span><span>${dryerCost.toFixed(2)} Br</span></div><hr>` : '';
+            let dryerRow = dryerCost > 0 ? `<div class="detail-row"><span>🧯 Сушка филамента (${totalPrintTime.toFixed(1)} ч)</span><span>${dryerCost.toFixed(2)} Br</span></div><hr>` : '';
 
             document.getElementById('result').innerHTML = `
-                <div style="margin-bottom:16px; font-weight:600;">📊 Сводка заказа</div>
+                <div style="margin-bottom:12px; font-weight:600;">📊 Сводка заказа</div>
                 ${details}
                 <div class="summary-block">
                     ${dryerRow}
                     <div class="detail-row"><span>🔹 Себестоимость всех деталей</span><span><strong>${totalCost.toFixed(2)} Br</strong></span></div>
                     <hr>
-                    <div class="detail-row" style="font-size:1.2em; font-weight:700;"><span>💰 Итого к оплате (×${margin})</span><span style="color:${margin<=1?'#34c759':margin<=1.2?'#ffcc00':margin<=1.5?'#ff9500':'#ff3b30'}">${final.toFixed(2)} Br</span></div>
+                    <div class="detail-row" style="font-size:1.1em; font-weight:700;"><span>💰 Итого к оплате (×${margin})</span><span style="color:${margin<=1?'#34c759':margin<=1.2?'#ffcc00':margin<=1.5?'#ff9500':'#ff3b30'}">${final.toFixed(2)} Br</span></div>
                 </div>
             `;
             document.getElementById('result').dataset.final = final.toFixed(2);
         }
 
-        // Модалка детали
         const partModal = document.getElementById('partModal');
         const modalMaterial = document.getElementById('modalMaterialSelect');
         const modalWeightRange = document.getElementById('modalWeightRange');
@@ -699,7 +692,6 @@
             recalc();
         });
 
-        // Модалка материала
         const matModal = document.getElementById('materialModal');
         document.getElementById('showAddMaterial').addEventListener('click', () => {
             populateAllSelects();
@@ -737,43 +729,17 @@
             document.getElementById('matTypeOther').classList.toggle('hidden', this.value !== 'other');
         });
 
-        // RAL палитра
-        document.getElementById('ralPaletteBtn').addEventListener('click', () => {
-            document.getElementById('ralSearchBlock').classList.toggle('hidden');
-            if (!document.getElementById('ralSearchBlock').classList.contains('hidden')) {
-                renderRalList(ralColorsFull);
-            }
-        });
-
         document.getElementById('ralSearchBtn').addEventListener('click', () => {
-            const query = document.getElementById('ralSearchInput').value.trim().toLowerCase();
-            if (!query) {
-                renderRalList(ralColorsFull);
-                return;
+            const code = document.getElementById('ralCodeInput').value.trim().toUpperCase();
+            const found = ralColorsFull.find(c => c.code.replace('RAL ','') === code || c.code === `RAL ${code}`);
+            if (found) {
+                document.getElementById('matColorPicker').value = found.hex;
+                document.getElementById('matColorText').value = `${found.name} (${found.code})`;
+                document.getElementById('ralResult').innerHTML = `✅ Найден: ${found.code} ${found.name}`;
+            } else {
+                document.getElementById('ralResult').innerHTML = `❌ RAL ${code} не найден`;
             }
-            const filtered = ralColorsFull.filter(c =>
-                c.code.toLowerCase().includes(query) ||
-                c.name.toLowerCase().includes(query)
-            );
-            renderRalList(filtered);
         });
-
-        function renderRalList(colors) {
-            const container = document.getElementById('ralResults');
-            container.innerHTML = '';
-            colors.forEach(c => {
-                const div = document.createElement('div');
-                div.className = 'dict-item';
-                div.style.cursor = 'pointer';
-                div.innerHTML = `<span>${c.code} ${c.name}</span><span style="display:inline-block; width:20px; height:20px; background:${c.hex}; border-radius:50%; margin-left:10px;"></span>`;
-                div.addEventListener('click', () => {
-                    document.getElementById('matColorPicker').value = c.hex;
-                    document.getElementById('matColorText').value = `${c.name} (${c.code})`;
-                    document.getElementById('ralSearchBlock').classList.add('hidden');
-                });
-                container.appendChild(div);
-            });
-        }
 
         document.getElementById('saveOrderBtn').addEventListener('click', () => {
             let name = document.getElementById('orderName').value.trim() || 'Без названия';
@@ -860,7 +826,6 @@
             });
         }
 
-        // Настройки
         document.getElementById('powerInput').value = settings.power;
         document.getElementById('tariffInput').value = settings.tariff;
         document.getElementById('amortInput').value = settings.amortization;
@@ -876,7 +841,6 @@
             alert('Настройки сохранены');
         });
 
-        // Вкладки
         document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => {
             document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
             document.querySelectorAll('.tab-panel').forEach(x => x.classList.remove('active'));
@@ -890,7 +854,6 @@
             }
         }));
 
-        // Инициализация
         populateAllSelects();
         updatePartMaterialSelect();
         renderMaterialsList();
