@@ -1,67 +1,481 @@
-import json
-import logging
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, WebAppInfo
-from telegram.ext import (
-    Application,
-    CommandHandler,
-    MessageHandler,
-    filters,
-    ContextTypes,
-)
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Калькулятор 3D-печати</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        :root {
+            --bg: var(--tg-theme-bg-color, #ffffff);
+            --text: var(--tg-theme-text-color, #000000);
+            --button: var(--tg-theme-button-color, #2481cc);
+            --button-text: var(--tg-theme-button-text-color, #ffffff);
+            --secondary-bg: var(--tg-theme-secondary-bg-color, #f0f0f0);
+            --hint: var(--tg-theme-hint-color, #999999);
+        }
+        * { box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 16px;
+            transition: background 0.3s, color 0.3s;
+            min-height: 100vh;
+        }
+        .container { max-width: 500px; margin: 0 auto; }
+        h2 { text-align: center; margin-bottom: 20px; }
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid var(--secondary-bg);
+        }
+        .tab {
+            flex: 1;
+            text-align: center;
+            padding: 12px 0;
+            cursor: pointer;
+            font-weight: 600;
+            border-bottom: 3px solid transparent;
+            transition: all 0.2s;
+        }
+        .tab.active {
+            border-bottom-color: var(--button);
+            color: var(--button);
+        }
+        .tab-panel { display: none; }
+        .tab-panel.active { display: block; }
 
-# ---------- НАСТРОЙКИ ----------
-TOKEN = "8980615750:AAGoh6_JwB36OYbrzSmJnE_SDbc6Xlt_RAA"
-# Твоя ссылка на Mini App
-MINI_APP_URL = "https://iamrusak-coder.github.io/3d-calc/"
+        .form-group {
+            margin-bottom: 16px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+        select, input[type="range"], input[type="number"], input[type="text"], input[type="color"] {
+            width: 100%;
+            padding: 10px;
+            border-radius: 10px;
+            border: 1px solid var(--secondary-bg);
+            background: var(--secondary-bg);
+            color: var(--text);
+            font-size: 15px;
+        }
+        input[type="range"] { padding: 0; height: 6px; }
+        .range-labels {
+            display: flex;
+            justify-content: space-between;
+            font-size: 13px;
+            opacity: 0.7;
+        }
+        .result {
+            background: var(--secondary-bg);
+            border-radius: 12px;
+            padding: 16px;
+            margin: 20px 0;
+            line-height: 1.6;
+        }
+        .price {
+            font-size: 24px;
+            font-weight: bold;
+            color: var(--button);
+            margin: 8px 0;
+        }
+        button {
+            background: var(--button);
+            color: var(--button-text);
+            border: none;
+            padding: 12px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            width: 100%;
+            margin: 8px 0;
+            cursor: pointer;
+        }
+        button.danger { background: #e74c3c; }
+        .material-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: var(--secondary-bg);
+            padding: 10px;
+            border-radius: 10px;
+            margin-bottom: 8px;
+        }
+        .material-info { flex: 1; }
+        .material-color {
+            display: inline-block;
+            width: 18px; height: 18px;
+            border-radius: 50%;
+            margin-right: 8px;
+            vertical-align: middle;
+            border: 1px solid #ccc;
+        }
+        .material-actions button {
+            width: auto;
+            padding: 5px 12px;
+            margin: 0 2px;
+        }
+        .add-material-form {
+            background: var(--secondary-bg);
+            border-radius: 12px;
+            padding: 16px;
+            margin-top: 16px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>🧮 Расчёт 3D-печати</h2>
 
-logging.basicConfig(
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    level=logging.INFO,
-)
-logger = logging.getLogger(__name__)
+        <!-- Вкладки -->
+        <div class="tabs">
+            <div class="tab active" data-tab="calc">📊 Расчёт</div>
+            <div class="tab" data-tab="settings">⚙️ Настройки</div>
+        </div>
 
-# ---------- /start ----------
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    keyboard = [[
-        InlineKeyboardButton(
-            "🧮 Открыть калькулятор",
-            web_app=WebAppInfo(url=MINI_APP_URL)
-        )
-    ]]
-    reply_markup = InlineKeyboardMarkup(keyboard)
-    await update.message.reply_text(
-        "Привет! Нажми кнопку ниже, чтобы рассчитать стоимость 3D-печати 👇",
-        reply_markup=reply_markup
-    )
+        <!-- Панель расчёта -->
+        <div class="tab-panel active" id="panel-calc">
+            <div class="form-group">
+                <label>Материал:</label>
+                <select id="materialSelect"></select>
+            </div>
 
-# ---------- Обработка данных, отправленных из Mini App ----------
-async def web_app_data(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    data = json.loads(update.effective_message.web_app_data.data)
-    material = data.get("material")
-    weight = data.get("weight")
-    time = data.get("time")
-    margin = data.get("margin")
-    final_price = data.get("final_price")
+            <div class="form-group">
+                <label>Вес (г): <span id="weightValue">100</span> г</label>
+                <input type="range" id="weight" min="1" max="2000" value="100" step="1">
+                <div class="range-labels"><span>1</span><span>2000</span></div>
+            </div>
 
-    text = (
-        "📊 *Расчёт из Mini App*\n\n"
-        f"▪ Материал: {material}\n"
-        f"▪ Вес: {weight} г\n"
-        f"▪ Время: {time} ч\n"
-        f"▪ Наценка: ×{margin}\n\n"
-        f"💰 *Итого к оплате: {final_price} руб*"
-    )
-    await update.message.reply_text(text, parse_mode="Markdown")
+            <div class="form-group">
+                <label>Время (ч): <span id="timeValue">4.0</span> ч</label>
+                <input type="range" id="time" min="0.5" max="48" value="4" step="0.5">
+                <div class="range-labels"><span>0.5</span><span>48</span></div>
+            </div>
 
-# ---------- Запуск ----------
-def main():
-    app = Application.builder().token(TOKEN).build()
+            <div class="form-group">
+                <label>Наценка:</label>
+                <select id="marginSelect">
+                    <option value="1.0">×1.0 (без наценки)</option>
+                    <option value="1.2" selected>×1.2 (+20%)</option>
+                    <option value="1.5">×1.5 (+50%)</option>
+                    <option value="2.0">×2.0 (+100%)</option>
+                </select>
+            </div>
 
-    app.add_handler(CommandHandler("start", start))
-    app.add_handler(MessageHandler(filters.StatusUpdate.WEB_APP_DATA, web_app_data))
+            <div class="result" id="result"></div>
+            <button id="sendBtn">📤 Отправить расчёт в чат</button>
+        </div>
 
-    print("Бот запущен...")
-    app.run_polling()
+        <!-- Панель настроек -->
+        <div class="tab-panel" id="panel-settings">
+            <h3>🔧 Глобальные параметры</h3>
+            <div class="form-group">
+                <label>Мощность принтера (кВт)</label>
+                <input type="number" id="powerInput" step="0.01" min="0" value="0.15">
+            </div>
+            <div class="form-group">
+                <label>Тариф за электричество (руб/кВт·ч)</label>
+                <input type="number" id="tariffInput" step="0.1" min="0" value="5.0">
+            </div>
+            <div class="form-group">
+                <label>Амортизация (руб/час)</label>
+                <input type="number" id="amortInput" step="0.1" min="0" value="10.0">
+            </div>
 
-if __name__ == "__main__":
-    main()
+            <h3>🎨 Материалы</h3>
+            <div id="materialsList"></div>
+            <button id="showAddMaterial">➕ Добавить материал</button>
+
+            <div class="add-material-form" id="addMaterialForm" style="display:none;">
+                <div class="form-group">
+                    <label>Название (например, PLA)</label>
+                    <input type="text" id="newMatName" placeholder="PLA">
+                </div>
+                <div class="form-group">
+                    <label>Цвет (название или HEX)</label>
+                    <div style="display:flex; gap:10px;">
+                        <input type="color" id="newMatColorPicker" value="#ff0000" style="width:60px; padding:0;">
+                        <input type="text" id="newMatColorText" placeholder="red" style="flex:1;">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Цена за грамм (руб)</label>
+                    <input type="number" id="newMatPrice" step="0.1" min="0" value="1.5">
+                </div>
+                <button id="saveNewMaterial">💾 Сохранить</button>
+                <button id="cancelAddMaterial" class="danger">Отмена</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+
+        // ---------- Хранилище по умолчанию ----------
+        const DEFAULT_SETTINGS = {
+            power: 0.15,
+            tariff: 5.0,
+            amortization: 10.0,
+            materials: [
+                { name: "PLA", color: "#FF5733", price: 1.5 },
+                { name: "ABS", color: "#33FF57", price: 1.7 },
+                { name: "PETG", color: "#3357FF", price: 1.9 }
+            ]
+        };
+
+        // Загрузка из localStorage или defaults
+        function loadSettings() {
+            const saved = localStorage.getItem('printCalcSettings');
+            if (saved) {
+                try { return JSON.parse(saved); } catch(e) { }
+            }
+            return JSON.parse(JSON.stringify(DEFAULT_SETTINGS));
+        }
+
+        function saveSettings(settings) {
+            localStorage.setItem('printCalcSettings', JSON.stringify(settings));
+        }
+
+        let settings = loadSettings();
+
+        // ---------- Элементы DOM ----------
+        const materialSelect = document.getElementById('materialSelect');
+        const weightInput = document.getElementById('weight');
+        const weightValue = document.getElementById('weightValue');
+        const timeInput = document.getElementById('time');
+        const timeValue = document.getElementById('timeValue');
+        const marginSelect = document.getElementById('marginSelect');
+        const resultDiv = document.getElementById('result');
+        const sendBtn = document.getElementById('sendBtn');
+
+        // Поля настроек
+        const powerInput = document.getElementById('powerInput');
+        const tariffInput = document.getElementById('tariffInput');
+        const amortInput = document.getElementById('amortInput');
+        const materialsListDiv = document.getElementById('materialsList');
+        const addMaterialForm = document.getElementById('addMaterialForm');
+
+        // ---------- Обновление выпадающего списка материалов ----------
+        function updateMaterialSelect() {
+            materialSelect.innerHTML = '';
+            settings.materials.forEach((mat, index) => {
+                const option = document.createElement('option');
+                option.value = index;
+                // Показываем цветной кружок + название
+                option.textContent = `${mat.color ? '●' : ''} ${mat.name} (${mat.price} руб/г)`;
+                // Можно стилизовать через data-атрибуты, но текст достаточно
+            });
+            // Если материалов нет, добавим пустой
+            if (settings.materials.length === 0) {
+                const option = document.createElement('option');
+                option.textContent = 'Нет материалов';
+                materialSelect.appendChild(option);
+            }
+        }
+
+        // ---------- Отображение списка материалов в настройках ----------
+        function renderMaterialsList() {
+            materialsListDiv.innerHTML = '';
+            settings.materials.forEach((mat, index) => {
+                const div = document.createElement('div');
+                div.className = 'material-item';
+                div.innerHTML = `
+                    <div class="material-info">
+                        <span class="material-color" style="background:${mat.color || '#ccc'}"></span>
+                        <strong>${mat.name}</strong> — ${mat.price} руб/г
+                    </div>
+                    <div class="material-actions">
+                        <button class="edit-material" data-index="${index}">✏️</button>
+                        <button class="delete-material danger" data-index="${index}">🗑️</button>
+                    </div>
+                `;
+                materialsListDiv.appendChild(div);
+            });
+
+            // Обработчики удаления
+            document.querySelectorAll('.delete-material').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const index = e.target.dataset.index;
+                    settings.materials.splice(index, 1);
+                    saveSettings(settings);
+                    renderMaterialsList();
+                    updateMaterialSelect();
+                    recalculate();
+                });
+            });
+
+            // Обработчики редактирования (заполним поля формы)
+            document.querySelectorAll('.edit-material').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const index = e.target.dataset.index;
+                    const mat = settings.materials[index];
+                    document.getElementById('newMatName').value = mat.name;
+                    document.getElementById('newMatColorPicker').value = mat.color || '#000000';
+                    document.getElementById('newMatColorText').value = mat.color || '';
+                    document.getElementById('newMatPrice').value = mat.price;
+                    addMaterialForm.style.display = 'block';
+                    // Сохраним индекс для обновления
+                    addMaterialForm.dataset.editIndex = index;
+                });
+            });
+        }
+
+        // ---------- Добавление / изменение материала ----------
+        function saveMaterial() {
+            const name = document.getElementById('newMatName').value.trim();
+            const colorPicker = document.getElementById('newMatColorPicker').value;
+            const colorText = document.getElementById('newMatColorText').value.trim();
+            const price = parseFloat(document.getElementById('newMatPrice').value);
+            if (!name || isNaN(price) || price < 0) {
+                alert('Заполните название и цену корректно.');
+                return;
+            }
+            const color = colorText || colorPicker; // приоритет текстовому полю
+
+            const editIndex = addMaterialForm.dataset.editIndex;
+            if (editIndex !== undefined && editIndex !== '') {
+                // Редактирование существующего
+                settings.materials[editIndex] = { name, color, price };
+            } else {
+                // Новый материал
+                settings.materials.push({ name, color, price });
+            }
+
+            saveSettings(settings);
+            // Очищаем форму
+            document.getElementById('newMatName').value = '';
+            document.getElementById('newMatColorPicker').value = '#ff0000';
+            document.getElementById('newMatColorText').value = '';
+            document.getElementById('newMatPrice').value = '1.5';
+            addMaterialForm.style.display = 'none';
+            delete addMaterialForm.dataset.editIndex;
+            renderMaterialsList();
+            updateMaterialSelect();
+            recalculate();
+        }
+
+        // ---------- Глобальные параметры ----------
+        function loadGlobalParams() {
+            powerInput.value = settings.power;
+            tariffInput.value = settings.tariff;
+            amortInput.value = settings.amortization;
+        }
+
+        function saveGlobalParams() {
+            settings.power = parseFloat(powerInput.value) || 0.15;
+            settings.tariff = parseFloat(tariffInput.value) || 5.0;
+            settings.amortization = parseFloat(amortInput.value) || 10.0;
+            saveSettings(settings);
+            recalculate();
+        }
+
+        // ---------- Расчёт ----------
+        function recalculate() {
+            const matIndex = materialSelect.value;
+            if (settings.materials.length === 0) {
+                resultDiv.innerHTML = '<p>Добавьте материалы в настройках.</p>';
+                return;
+            }
+            const mat = settings.materials[matIndex];
+            if (!mat) return;
+
+            const weight = parseFloat(weightInput.value);
+            const time = parseFloat(timeInput.value);
+            const margin = parseFloat(marginSelect.value);
+
+            const plasticCost = weight * mat.price;
+            const electricityCost = settings.power * time * settings.tariff;
+            const amortization = settings.amortization * time;
+            const costPrice = plasticCost + electricityCost + amortization;
+            const finalPrice = costPrice * margin;
+
+            weightValue.textContent = weight;
+            timeValue.textContent = time.toFixed(1);
+
+            resultDiv.innerHTML = `
+                <strong>📊 Детали расчёта</strong><br>
+                ▪ Материал: ${mat.name} (${mat.price} руб/г)<br>
+                ▪ Вес: ${weight} г → ${plasticCost.toFixed(2)} руб<br>
+                ▪ Время: ${time.toFixed(1)} ч<br>
+                ▪ Электричество: ${electricityCost.toFixed(2)} руб<br>
+                ▪ Амортизация: ${amortization.toFixed(2)} руб<br>
+                ▪ Себестоимость: ${costPrice.toFixed(2)} руб<br>
+                ▪ Наценка: ×${margin}<br>
+                <div class="price">💰 Итого: ${finalPrice.toFixed(2)} руб</div>
+            `;
+            resultDiv.dataset.finalPrice = finalPrice.toFixed(2);
+        }
+
+        // ---------- Отправка в чат ----------
+        sendBtn.addEventListener('click', () => {
+            const finalPrice = resultDiv.dataset.finalPrice;
+            const matIndex = materialSelect.value;
+            const mat = settings.materials[matIndex];
+            const data = {
+                material: mat.name,
+                color: mat.color,
+                weight: weightInput.value,
+                time: timeInput.value,
+                margin: marginSelect.value,
+                final_price: finalPrice
+            };
+            tg.sendData(JSON.stringify(data));
+            tg.showPopup({ title: 'Готово', message: 'Расчёт отправлен.' });
+        });
+
+        // ---------- События изменения параметров ----------
+        materialSelect.addEventListener('change', recalculate);
+        weightInput.addEventListener('input', recalculate);
+        timeInput.addEventListener('input', recalculate);
+        marginSelect.addEventListener('change', recalculate);
+
+        // ---------- Вкладки ----------
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+                tab.classList.add('active');
+                const panelId = 'panel-' + tab.dataset.tab;
+                document.getElementById(panelId).classList.add('active');
+                if (tab.dataset.tab === 'settings') {
+                    loadGlobalParams();
+                    renderMaterialsList();
+                }
+            });
+        });
+
+        // ---------- Кнопки настроек ----------
+        document.getElementById('showAddMaterial').addEventListener('click', () => {
+            addMaterialForm.style.display = 'block';
+            delete addMaterialForm.dataset.editIndex;
+            document.getElementById('newMatName').value = '';
+            document.getElementById('newMatColorPicker').value = '#ff0000';
+            document.getElementById('newMatColorText').value = '';
+            document.getElementById('newMatPrice').value = '1.5';
+        });
+
+        document.getElementById('saveNewMaterial').addEventListener('click', saveMaterial);
+        document.getElementById('cancelAddMaterial').addEventListener('click', () => {
+            addMaterialForm.style.display = 'none';
+            delete addMaterialForm.dataset.editIndex;
+        });
+
+        // Автосохранение глобальных параметров при изменении
+        [powerInput, tariffInput, amortInput].forEach(input => {
+            input.addEventListener('change', saveGlobalParams);
+        });
+
+        // Инициализация
+        updateMaterialSelect();
+        recalculate();
+        tg.ready();
+    </script>
+</body>
+</html>
