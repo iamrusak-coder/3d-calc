@@ -13,76 +13,80 @@
             --button-text: var(--tg-theme-button-text-color, #ffffff);
             --secondary-bg: var(--tg-theme-secondary-bg-color, #f0f0f0);
         }
-        * { box-sizing: border-box; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background: var(--bg);
             color: var(--text);
-            margin: 0; padding: 16px; min-height: 100vh;
+            padding: 16px;
+            min-height: 100vh;
+            transition: background 0.3s, color 0.3s;
         }
         .container { max-width: 500px; margin: 0 auto; }
-        h2 { text-align: center; margin-bottom: 20px; }
+        h2 { text-align: center; margin-bottom: 20px; font-size: 1.5em; }
         .tabs {
-            display: flex; gap: 6px; margin-bottom: 20px;
+            display: flex; gap: 4px; margin-bottom: 20px;
             border-bottom: 2px solid var(--secondary-bg); flex-wrap: wrap;
         }
         .tab {
-            flex: 1 0 auto; text-align: center; padding: 10px 6px; cursor: pointer;
+            flex: 1 0 auto; text-align: center; padding: 10px 4px; cursor: pointer;
             font-weight: 600; border-bottom: 3px solid transparent;
             transition: 0.2s; font-size: 13px; white-space: nowrap;
         }
         .tab.active { border-bottom-color: var(--button); color: var(--button); }
-        .tab-panel { display: none; }
+        .tab-panel { display: none; animation: fadeIn 0.3s ease; }
         .tab-panel.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 
         .form-group { margin-bottom: 16px; }
-        label { display: block; margin-bottom: 5px; font-weight: 500; }
+        label { display: block; margin-bottom: 5px; font-weight: 500; font-size: 0.95em; }
         select, input[type="range"], input[type="number"], input[type="text"], input[type="color"] {
             width: 100%; padding: 10px; border-radius: 10px;
             border: 1px solid var(--secondary-bg);
             background: var(--secondary-bg); color: var(--text); font-size: 15px;
+            transition: all 0.2s;
         }
-        input[type="range"] { padding: 0; height: 6px; }
-        .range-labels { display: flex; justify-content: space-between; font-size: 13px; opacity: 0.7; }
+        select:focus, input:focus { outline: none; border-color: var(--button); box-shadow: 0 0 0 2px rgba(36,129,204,0.2); }
+        input[type="range"] { padding: 0; height: 6px; background: var(--secondary-bg); }
+        .range-labels { display: flex; justify-content: space-between; font-size: 12px; opacity: 0.7; }
         .result {
             background: var(--secondary-bg); border-radius: 12px;
             padding: 16px; margin: 20px 0; line-height: 1.6;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            transition: all 0.3s;
         }
-        .price { font-size: 24px; font-weight: bold; color: var(--button); margin: 8px 0; }
+        .price { font-size: 26px; font-weight: bold; margin: 8px 0; transition: color 0.3s; }
         button {
             background: var(--button); color: var(--button-text);
             border: none; padding: 12px; border-radius: 10px;
             font-size: 16px; font-weight: 600; width: 100%; margin: 8px 0;
-            cursor: pointer;
+            cursor: pointer; transition: opacity 0.2s, transform 0.1s;
         }
+        button:active { transform: scale(0.98); }
         button.danger { background: #e74c3c; }
-        button.small { width: auto; padding: 6px 12px; margin: 2px; }
+        button.small { width: auto; padding: 6px 12px; margin: 2px; font-size: 14px; }
         .material-item, .dict-item {
             display: flex; align-items: center; justify-content: space-between;
             background: var(--secondary-bg); padding: 10px; border-radius: 10px;
-            margin-bottom: 8px; flex-wrap: wrap;
+            margin-bottom: 8px; flex-wrap: wrap; box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+            transition: background 0.2s;
         }
+        .material-item:hover { background: var(--tg-theme-secondary-bg-color, #e8e8e8); }
         .material-info { flex: 1; }
         .material-color {
             display: inline-block; width: 18px; height: 18px;
             border-radius: 50%; margin-right: 8px; vertical-align: middle;
-            border: 1px solid #ccc;
+            border: 1px solid rgba(0,0,0,0.2);
         }
         .add-material-form, .dict-form {
             background: var(--secondary-bg); border-radius: 12px;
-            padding: 16px; margin-top: 16px;
+            padding: 16px; margin-top: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);
         }
-        .add-material-form input,
-        .add-material-form select { margin-bottom: 10px; }
+        .add-material-form input, .add-material-form select { margin-bottom: 10px; }
         .two-cols { display: flex; gap: 10px; }
         .two-cols > * { flex: 1; }
         .hidden { display: none; }
-
-        /* кастомный селект */
-        .custom-select {
-            position: relative;
-            width: 100%;
-        }
+        .custom-select { position: relative; width: 100%; }
         .custom-select-trigger {
             padding: 10px; border-radius: 10px;
             border: 1px solid var(--secondary-bg);
@@ -98,15 +102,15 @@
         .custom-options.open { display: block; }
         .custom-option {
             padding: 10px; cursor: pointer; display: flex; align-items: center; gap: 10px;
-            border-bottom: 1px solid rgba(128,128,128,0.2);
+            border-bottom: 1px solid rgba(128,128,128,0.15);
         }
         .custom-option:hover { background: var(--button); color: var(--button-text); }
         .color-dot {
             display: inline-block; width: 18px; height: 18px;
-            border-radius: 50%; border: 1px solid #ccc; flex-shrink: 0;
+            border-radius: 50%; border: 1px solid rgba(0,0,0,0.2); flex-shrink: 0;
         }
-
-        /* RAL поиск */
+        .sort-btns { display: flex; gap: 6px; margin-bottom: 12px; flex-wrap: wrap; }
+        .sort-btns button { font-size: 12px; padding: 5px 10px; margin: 0; }
         #ralSearchBlock {
             background: var(--secondary-bg); padding: 12px; border-radius: 12px; margin-top: 8px;
         }
@@ -124,8 +128,11 @@
             <div class="tab" data-tab="dictionaries">📋 Справочники</div>
         </div>
 
-        <!-- РАСЧЁТ -->
         <div class="tab-panel active" id="panel-calc">
+            <div class="form-group">
+                <label>Название модели / заказа</label>
+                <input type="text" id="modelName" placeholder="например, Кронштейн v2">
+            </div>
             <div class="form-group">
                 <label>Материал:</label>
                 <div class="custom-select" id="materialCustomSelect">
@@ -159,9 +166,14 @@
             <button id="sendBtn">📤 Отправить расчёт в чат</button>
         </div>
 
-        <!-- МАТЕРИАЛЫ -->
         <div class="tab-panel" id="panel-materials">
             <h3>🎨 Список материалов</h3>
+            <div class="sort-btns">
+                <button id="sortByBrand" class="small">По бренду</button>
+                <button id="sortByType" class="small">По типу</button>
+                <button id="sortByPrice" class="small">По цене/г</button>
+                <button id="sortByWeight" class="small">По весу упак.</button>
+            </div>
             <div id="materialsList"></div>
             <button id="showAddMaterial">➕ Добавить материал</button>
             <div class="add-material-form" id="addMaterialForm" style="display:none;">
@@ -208,7 +220,6 @@
             </div>
         </div>
 
-        <!-- НАСТРОЙКИ -->
         <div class="tab-panel" id="panel-settings">
             <h3>🔧 Глобальные параметры</h3>
             <div class="form-group">
@@ -223,10 +234,10 @@
                 <label>Амортизация (Br/час)</label>
                 <input type="number" id="amortInput" step="0.1" min="0" value="10.0">
             </div>
-            <p style="font-size:0.9em; opacity:0.8;">Все суммы в белорусских рублях (Br).</p>
+            <p style="font-size:0.9em; opacity:0.8; margin: 16px 0;">Все суммы в белорусских рублях (Br).</p>
+            <button id="resetSettings" class="danger">🔄 Сбросить настройки</button>
         </div>
 
-        <!-- СПРАВОЧНИКИ -->
         <div class="tab-panel" id="panel-dictionaries">
             <h3>📋 Редактирование справочников</h3>
             <div class="form-group">
@@ -249,11 +260,9 @@
     </div>
 
     <script>
-        // ========== Telegram API ==========
         const tg = window.Telegram?.WebApp;
         if (tg) { tg.ready(); tg.expand(); }
 
-        // ========== Полный RAL Classic (216 цветов) ==========
         const ralColorsFull = [
             {code:"RAL 1000", name:"Зелёно-бежевый", hex:"#BEBD7F"},
             {code:"RAL 1001", name:"Бежевый", hex:"#C2B078"},
@@ -470,7 +479,6 @@
             {code:"RAL 9023", name:"Жемчужный тёмно-серый", hex:"#7A7B7C"}
         ];
 
-        // Словарь обычных цветов (название -> HEX)
         const colorNamesMap = {
             "красный": "#ff0000", "алый": "#ff2400", "бордовый": "#800000",
             "розовый": "#ffc0cb", "оранжевый": "#ffa500", "жёлтый": "#ffff00",
@@ -501,18 +509,24 @@
             return closest;
         }
 
-        // Функция для получения читаемого названия цвета из материала
         function getColorName(mat) {
             if (!mat || !mat.color) return 'нет';
-            if (mat.color.startsWith('#')) {
-                return findClosestColorName(mat.color);
-            }
+            if (mat.color.startsWith('#')) return findClosestColorName(mat.color);
             return mat.color;
         }
 
-        // ========== Управление справочниками и статистикой ==========
         const DEFAULT_BRANDS = ["eSUN","BestFilament","Devil Design","Fiberlogy","Gembird","Creality","Hatchbox","Polymaker","Prusament"];
         const DEFAULT_TYPES = ["PLA","PLA+","ABS","PETG","TPU","ASA","Nylon","PC","HIPS","PVA","Wood","Metal"];
+        const DEFAULT_SETTINGS = {
+            power: 0.15,
+            tariff: 0.25,
+            amortization: 10.0,
+            materials: [
+                {brand:"eSUN", type:"PLA+", series:"Pro", color:"#FF5733", pricePerPackage:30, packageWeight:1000},
+                {brand:"BestFilament", type:"ABS", series:"", color:"#33FF57", pricePerPackage:45, packageWeight:1000},
+                {brand:"Fiberlogy", type:"PETG", series:"Easy", color:"#3357FF", pricePerPackage:55, packageWeight:1000}
+            ]
+        };
 
         function getDict(key, defaults) {
             const saved = localStorage.getItem(key);
@@ -520,7 +534,6 @@
             return [...defaults];
         }
         function saveDict(key, arr) { localStorage.setItem(key, JSON.stringify(arr)); }
-
         function getUsage(key) {
             const saved = localStorage.getItem(key);
             return saved ? JSON.parse(saved) : {};
@@ -539,7 +552,6 @@
         function saveBrands() { saveDict('customBrands', customBrands); }
         function saveTypes() { saveDict('customTypes', customTypes); }
 
-        // ========== Построение выпадающих списков брендов/типов ==========
         function populateBrandSelect() {
             brandSelect.innerHTML = '<option value="">-- Выберите бренд --</option>';
             const sorted = [...customBrands].sort((a,b) => {
@@ -551,7 +563,7 @@
             sorted.forEach(b => {
                 const opt = document.createElement('option');
                 opt.value = b;
-                opt.textContent = b + (brandUsage[b] ? ` (${brandUsage[b]})` : '');
+                opt.textContent = b;
                 brandSelect.appendChild(opt);
             });
             const otherOpt = document.createElement('option');
@@ -570,7 +582,7 @@
             sorted.forEach(t => {
                 const opt = document.createElement('option');
                 opt.value = t;
-                opt.textContent = t + (typeUsage[t] ? ` (${typeUsage[t]})` : '');
+                opt.textContent = t;
                 typeSelect.appendChild(opt);
             });
             const otherOpt = document.createElement('option');
@@ -578,7 +590,6 @@
             typeSelect.appendChild(otherOpt);
         }
 
-        // ========== Кастомный селект для материалов ==========
         let selectedMaterialIndex = null;
         const materialTrigger = document.getElementById('materialTrigger');
         const materialTriggerText = document.getElementById('materialTriggerText');
@@ -611,11 +622,10 @@
                 materialOptions.appendChild(opt);
             });
 
-            // Если ранее был выбран материал и он ещё существует
             if (selectedMaterialIndex !== null && settings.materials[selectedMaterialIndex]) {
                 selectMaterial(selectedMaterialIndex);
-            } else {
-                if (settings.materials.length > 0) selectMaterial(0);
+            } else if (settings.materials.length > 0) {
+                selectMaterial(0);
             }
         }
 
@@ -630,17 +640,11 @@
             recalculate();
         }
 
-        materialTrigger.addEventListener('click', () => {
-            materialOptions.classList.toggle('open');
-        });
-        // Закрытие при клике вне
+        materialTrigger.addEventListener('click', () => materialOptions.classList.toggle('open'));
         document.addEventListener('click', (e) => {
-            if (!materialCustomSelect.contains(e.target)) {
-                materialOptions.classList.remove('open');
-            }
+            if (!materialCustomSelect.contains(e.target)) materialOptions.classList.remove('open');
         });
 
-        // ========== Отображение справочников ==========
         function renderBrandsList() {
             const container = document.getElementById('brandsList');
             container.innerHTML = '';
@@ -683,18 +687,6 @@
             });
         }
 
-        // ========== Настройки по умолчанию ==========
-        const DEFAULT_SETTINGS = {
-            power: 0.15,
-            tariff: 0.25,
-            amortization: 10.0,
-            materials: [
-                {brand:"eSUN", type:"PLA+", series:"Pro", color:"#FF5733", pricePerPackage:30, packageWeight:1000},
-                {brand:"BestFilament", type:"ABS", series:"", color:"#33FF57", pricePerPackage:45, packageWeight:1000},
-                {brand:"Fiberlogy", type:"PETG", series:"Easy", color:"#3357FF", pricePerPackage:55, packageWeight:1000}
-            ]
-        };
-
         function loadSettings() {
             const saved = localStorage.getItem('printCalcSettings');
             if (saved) { try { return JSON.parse(saved); } catch(e) {} }
@@ -703,7 +695,32 @@
         function saveSettings(s) { localStorage.setItem('printCalcSettings', JSON.stringify(s)); }
         let settings = loadSettings();
 
-        // ========== DOM элементы ==========
+        let currentSort = { field: null, asc: true };
+        function sortMaterials(field) {
+            if (currentSort.field === field) {
+                currentSort.asc = !currentSort.asc;
+            } else {
+                currentSort.field = field;
+                currentSort.asc = true;
+            }
+            settings.materials.sort((a,b) => {
+                let valA, valB;
+                switch(field) {
+                    case 'brand': valA = a.brand.toLowerCase(); valB = b.brand.toLowerCase(); break;
+                    case 'type': valA = a.type.toLowerCase(); valB = b.type.toLowerCase(); break;
+                    case 'pricePerGram': valA = a.pricePerPackage / a.packageWeight; valB = b.pricePerPackage / b.packageWeight; break;
+                    case 'packageWeight': valA = a.packageWeight; valB = b.packageWeight; break;
+                    default: return 0;
+                }
+                if (valA < valB) return currentSort.asc ? -1 : 1;
+                if (valA > valB) return currentSort.asc ? 1 : -1;
+                return 0;
+            });
+            saveSettings(settings);
+            renderMaterialsList();
+            updateCustomMaterialSelect();
+        }
+
         const weightInput = document.getElementById('weight');
         const weightValue = document.getElementById('weightValue');
         const timeInput = document.getElementById('time');
@@ -711,6 +728,7 @@
         const marginSelect = document.getElementById('marginSelect');
         const resultDiv = document.getElementById('result');
         const sendBtn = document.getElementById('sendBtn');
+        const modelNameInput = document.getElementById('modelName');
         const materialsListDiv = document.getElementById('materialsList');
         const addMaterialForm = document.getElementById('addMaterialForm');
         const brandSelect = document.getElementById('brandSelect');
@@ -730,8 +748,8 @@
         const powerInput = document.getElementById('powerInput');
         const tariffInput = document.getElementById('tariffInput');
         const amortInput = document.getElementById('amortInput');
+        const resetSettingsBtn = document.getElementById('resetSettings');
 
-        // ========== Управление полем "Другое" ==========
         function toggleOther(select, input) {
             if (select.value === 'other') {
                 input.classList.remove('hidden');
@@ -744,7 +762,6 @@
         brandSelect.addEventListener('change', () => toggleOther(brandSelect, newBrandOther));
         typeSelect.addEventListener('change', () => toggleOther(typeSelect, newTypeOther));
 
-        // ========== Выбор цвета: автоназвание и RAL поиск ==========
         newColorPicker.addEventListener('input', () => {
             const hex = newColorPicker.value;
             newColorText.value = findClosestColorName(hex);
@@ -762,7 +779,6 @@
             ralCodeInput.value = '';
             ralResult.innerHTML = '';
         });
-
         ralSearchBtn.addEventListener('click', () => {
             const code = ralCodeInput.value.trim().toUpperCase();
             const found = ralColorsFull.find(c => c.code.replace('RAL ','') === code || c.code === `RAL ${code}`);
@@ -775,7 +791,6 @@
             }
         });
 
-        // ========== Отображение списка материалов во вкладке ==========
         function renderMaterialsList() {
             materialsListDiv.innerHTML = '';
             settings.materials.forEach((mat, index) => {
@@ -871,7 +886,6 @@
                 populateTypeSelect();
             }
             saveSettings(settings);
-            // Очистка формы
             brandSelect.value = ''; newBrandOther.classList.add('hidden'); newBrandOther.value='';
             typeSelect.value = ''; newTypeOther.classList.add('hidden'); newTypeOther.value='';
             newSeries.value = ''; newColorPicker.value = '#ff0000'; newColorText.value = '';
@@ -882,7 +896,6 @@
             updateCustomMaterialSelect();
         }
 
-        // ========== Расчёт ==========
         function recalculate() {
             if (selectedMaterialIndex === null || settings.materials.length === 0) {
                 resultDiv.innerHTML = '<p>Добавьте материалы во вкладке «🎨 Материалы».</p>';
@@ -899,9 +912,17 @@
             const amortization = settings.amortization * time;
             const costPrice = plasticCost + electricityCost + amortization;
             const finalPrice = costPrice * margin;
+
             weightValue.textContent = weight;
             timeValue.textContent = time.toFixed(1);
             const colorName = getColorName(mat);
+
+            let priceColor;
+            if (margin <= 1.0) priceColor = '#27ae60';
+            else if (margin <= 1.2) priceColor = '#f1c40f';
+            else if (margin <= 1.5) priceColor = '#e67e22';
+            else priceColor = '#e74c3c';
+
             resultDiv.innerHTML = `
                 <strong>📊 Детали расчёта</strong><br>
                 ▪ Материал: ${mat.brand} ${mat.type} ${mat.series} (${colorName}) (${ppg.toFixed(3)} Br/г)<br>
@@ -911,16 +932,17 @@
                 ▪ Амортизация: ${amortization.toFixed(2)} Br<br>
                 ▪ Себестоимость: ${costPrice.toFixed(2)} Br<br>
                 ▪ Наценка: ×${margin}<br>
-                <div class="price">💰 Итого: ${finalPrice.toFixed(2)} Br</div>`;
+                <div class="price" style="color:${priceColor}">💰 Итого: ${finalPrice.toFixed(2)} Br</div>`;
             resultDiv.dataset.finalPrice = finalPrice.toFixed(2);
         }
 
-        // ========== Отправка ==========
         sendBtn.addEventListener('click', () => {
             if (!tg?.sendData) { alert('Только внутри Telegram'); return; }
             if (selectedMaterialIndex === null) return;
             const mat = settings.materials[selectedMaterialIndex];
+            const modelName = modelNameInput.value.trim() || 'Без названия';
             const data = {
+                model: modelName,
                 material: `${mat.brand} ${mat.type} ${mat.series}`,
                 color: getColorName(mat),
                 weight: weightInput.value,
@@ -929,10 +951,9 @@
                 final_price: resultDiv.dataset.finalPrice + ' Br'
             };
             tg.sendData(JSON.stringify(data));
-            tg.showPopup({ title: 'Готово', message: 'Расчёт отправлен.' });
+            tg.showPopup({ title: 'Готово', message: `Расчёт "${modelName}" отправлен.` });
         });
 
-        // ========== Глобальные параметры ==========
         function loadGlobalParamsToForm() {
             powerInput.value = settings.power;
             tariffInput.value = settings.tariff;
@@ -947,7 +968,33 @@
         }
         [powerInput, tariffInput, amortInput].forEach(inp => inp.addEventListener('change', saveGlobalParams));
 
-        // ========== События вкладок ==========
+        resetSettingsBtn.addEventListener('click', () => {
+            if (confirm('Вы уверены, что хотите сбросить все настройки и материалы к заводским?')) {
+                localStorage.removeItem('printCalcSettings');
+                localStorage.removeItem('customBrands');
+                localStorage.removeItem('customTypes');
+                localStorage.removeItem('brandUsage');
+                localStorage.removeItem('typeUsage');
+                customBrands = [...DEFAULT_BRANDS];
+                customTypes = [...DEFAULT_TYPES];
+                brandUsage = {};
+                typeUsage = {};
+                saveBrands();
+                saveTypes();
+                settings = JSON.parse(JSON.stringify(DEFAULT_SETTINGS));
+                saveSettings(settings);
+                loadGlobalParamsToForm();
+                renderBrandsList();
+                renderTypesList();
+                populateBrandSelect();
+                populateTypeSelect();
+                updateCustomMaterialSelect();
+                renderMaterialsList();
+                recalculate();
+                alert('Настройки сброшены.');
+            }
+        });
+
         document.querySelectorAll('.tab').forEach(tab => {
             tab.addEventListener('click', () => {
                 document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
@@ -982,7 +1029,6 @@
             delete addMaterialForm.dataset.editIndex;
         });
 
-        // ========== Кнопки справочников ==========
         document.getElementById('addBrandBtn').addEventListener('click', () => {
             const newBrand = document.getElementById('newBrandInput').value.trim();
             if (newBrand && !customBrands.includes(newBrand)) {
@@ -1004,12 +1050,15 @@
             }
         });
 
-        // ========== Обработчики расчёта ==========
+        document.getElementById('sortByBrand').addEventListener('click', () => sortMaterials('brand'));
+        document.getElementById('sortByType').addEventListener('click', () => sortMaterials('type'));
+        document.getElementById('sortByPrice').addEventListener('click', () => sortMaterials('pricePerGram'));
+        document.getElementById('sortByWeight').addEventListener('click', () => sortMaterials('packageWeight'));
+
         weightInput.addEventListener('input', recalculate);
         timeInput.addEventListener('input', recalculate);
         marginSelect.addEventListener('change', recalculate);
 
-        // Инициализация
         populateBrandSelect();
         populateTypeSelect();
         updateCustomMaterialSelect();
