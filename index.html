@@ -1,239 +1,67 @@
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Калькулятор 3D-печати</title>
-    <!-- Подключаем Telegram Web App API -->
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <style>
-        :root {
-            --bg: var(--tg-theme-bg-color, #ffffff);
-            --text: var(--tg-theme-text-color, #000000);
-            --button: var(--tg-theme-button-color, #2481cc);
-            --button-text: var(--tg-theme-button-text-color, #ffffff);
-            --secondary-bg: var(--tg-theme-secondary-bg-color, #f0f0f0);
-        }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background-color: var(--bg);
-            color: var(--text);
-            margin: 0;
-            padding: 20px;
-            transition: background-color 0.3s, color 0.3s;
-        }
-        h2 {
-            margin-top: 0;
-            font-size: 22px;
-            text-align: center;
-        }
-        .form-group {
-            margin-bottom: 20px;
-        }
-        label {
-            display: block;
-            margin-bottom: 6px;
-            font-weight: 600;
-            font-size: 15px;
-        }
-        select, input[type="range"], input[type="number"] {
-            width: 100%;
-            padding: 10px;
-            font-size: 16px;
-            border-radius: 10px;
-            border: 1px solid #ccc;
-            background-color: var(--secondary-bg);
-            color: var(--text);
-            box-sizing: border-box;
-        }
-        input[type="range"] {
-            padding: 0;
-        }
-        .range-labels {
-            display: flex;
-            justify-content: space-between;
-            font-size: 13px;
-            opacity: 0.8;
-        }
-        .result {
-            background-color: var(--secondary-bg);
-            border-radius: 12px;
-            padding: 20px;
-            margin-top: 30px;
-            font-size: 18px;
-            line-height: 1.6;
-        }
-        .result strong {
-            display: block;
-            margin-bottom: 10px;
-            font-size: 20px;
-        }
-        .price {
-            font-size: 28px;
-            font-weight: bold;
-            color: var(--button);
-            margin: 15px 0 5px;
-        }
-        button {
-            background-color: var(--button);
-            color: var(--button-text);
-            border: none;
-            padding: 15px;
-            font-size: 17px;
-            font-weight: bold;
-            border-radius: 12px;
-            width: 100%;
-            cursor: pointer;
-            margin-top: 15px;
-            transition: opacity 0.2s;
-        }
-        button:active {
-            opacity: 0.8;
-        }
-    </style>
-</head>
-<body>
-    <h2>🧮 Расчёт стоимости 3D-печати</h2>
+import json
+import logging
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, WebAppInfo
+from telegram.ext import (
+    Application,
+    CommandHandler,
+    MessageHandler,
+    filters,
+    ContextTypes,
+)
 
-    <div class="form-group">
-        <label>Материал:</label>
-        <select id="material">
-            <option value="PLA">PLA — 1.5 руб/г</option>
-            <option value="ABS">ABS — 1.7 руб/г</option>
-            <option value="PETG">PETG — 1.9 руб/г</option>
-        </select>
-    </div>
+# ---------- НАСТРОЙКИ ----------
+TOKEN = "8980615750:AAGoh6_JwB36OYbrzSmJnE_SDbc6Xlt_RAA"
+# Твоя ссылка на Mini App
+MINI_APP_URL = "https://iamrusak-coder.github.io/3d-calc/"
 
-    <div class="form-group">
-        <label>Вес изделия (граммы): <span id="weightValue">100</span> г</label>
-        <input type="range" id="weight" min="1" max="2000" value="100" step="1">
-        <div class="range-labels">
-            <span>1 г</span><span>1000 г</span><span>2000 г</span>
-        </div>
-    </div>
+logging.basicConfig(
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    level=logging.INFO,
+)
+logger = logging.getLogger(__name__)
 
-    <div class="form-group">
-        <label>Время печати (часы): <span id="timeValue">4.0</span> ч</label>
-        <input type="range" id="time" min="0.5" max="48" value="4" step="0.5">
-        <div class="range-labels">
-            <span>0.5 ч</span><span>24 ч</span><span>48 ч</span>
-        </div>
-    </div>
+# ---------- /start ----------
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    keyboard = [[
+        InlineKeyboardButton(
+            "🧮 Открыть калькулятор",
+            web_app=WebAppInfo(url=MINI_APP_URL)
+        )
+    ]]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    await update.message.reply_text(
+        "Привет! Нажми кнопку ниже, чтобы рассчитать стоимость 3D-печати 👇",
+        reply_markup=reply_markup
+    )
 
-    <div class="form-group">
-        <label>Наценка:</label>
-        <select id="margin">
-            <option value="1.0">×1.0 (без наценки)</option>
-            <option value="1.2" selected>×1.2 (+20%)</option>
-            <option value="1.5">×1.5 (+50%)</option>
-            <option value="2.0">×2.0 (+100%)</option>
-        </select>
-    </div>
+# ---------- Обработка данных, отправленных из Mini App ----------
+async def web_app_data(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    data = json.loads(update.effective_message.web_app_data.data)
+    material = data.get("material")
+    weight = data.get("weight")
+    time = data.get("time")
+    margin = data.get("margin")
+    final_price = data.get("final_price")
 
-    <div class="result" id="result">
-        <!-- Динамически заполняется JS -->
-    </div>
+    text = (
+        "📊 *Расчёт из Mini App*\n\n"
+        f"▪ Материал: {material}\n"
+        f"▪ Вес: {weight} г\n"
+        f"▪ Время: {time} ч\n"
+        f"▪ Наценка: ×{margin}\n\n"
+        f"💰 *Итого к оплате: {final_price} руб*"
+    )
+    await update.message.reply_text(text, parse_mode="Markdown")
 
-    <button id="sendBtn">📤 Отправить расчёт в чат</button>
+# ---------- Запуск ----------
+def main():
+    app = Application.builder().token(TOKEN).build()
 
-    <script>
-        // Получаем доступ к Telegram WebApp
-        const tg = window.Telegram.WebApp;
-        tg.expand(); // Разворачиваем на весь экран
+    app.add_handler(CommandHandler("start", start))
+    app.add_handler(MessageHandler(filters.StatusUpdate.WEB_APP_DATA, web_app_data))
 
-        // Цены материалов (синхронизированы с Python-ботом)
-        const materialPrices = {
-            PLA: 1.5,
-            ABS: 1.7,
-            PETG: 1.9
-        };
-        const PRINTER_POWER_KW = 0.15;
-        const ELECTRICITY_TARIFF = 5.0;
-        const AMORTIZATION_PER_HOUR = 10.0;
+    print("Бот запущен...")
+    app.run_polling()
 
-        // Элементы интерфейса
-        const materialSelect = document.getElementById('material');
-        const weightRange = document.getElementById('weight');
-        const weightValue = document.getElementById('weightValue');
-        const timeRange = document.getElementById('time');
-        const timeValue = document.getElementById('timeValue');
-        const marginSelect = document.getElementById('margin');
-        const resultDiv = document.getElementById('result');
-        const sendBtn = document.getElementById('sendBtn');
-
-        // Функция пересчёта
-        function recalculate() {
-            const material = materialSelect.value;
-            const materialPrice = materialPrices[material];
-            const weight = parseFloat(weightRange.value);
-            const time = parseFloat(timeRange.value);
-            const margin = parseFloat(marginSelect.value);
-
-            const plasticCost = weight * materialPrice;
-            const electricityCost = PRINTER_POWER_KW * time * ELECTRICITY_TARIFF;
-            const amortization = AMORTIZATION_PER_HOUR * time;
-            const costPrice = plasticCost + electricityCost + amortization;
-            const finalPrice = costPrice * margin;
-
-            // Обновляем отображаемые значения
-            weightValue.textContent = weight;
-            timeValue.textContent = time.toFixed(1);
-
-            // Формируем результат
-            resultDiv.innerHTML = `
-                <strong>📊 Детали расчёта:</strong>
-                ▪ Материал: ${material} (${materialPrice} руб/г)<br>
-                ▪ Вес: ${weight} г → ${plasticCost.toFixed(2)} руб<br>
-                ▪ Время: ${time.toFixed(1)} ч<br>
-                ▪ Электричество: ${electricityCost.toFixed(2)} руб<br>
-                ▪ Амортизация: ${amortization.toFixed(2)} руб<br>
-                ▪ Себестоимость: ${costPrice.toFixed(2)} руб<br>
-                ▪ Наценка: ×${margin}<br>
-                <div class="price">💰 Итого: ${finalPrice.toFixed(2)} руб</div>
-            `;
-
-            // Сохраняем итоговую цену для отправки
-            resultDiv.dataset.finalPrice = finalPrice.toFixed(2);
-        }
-
-        // Отправка расчёта в чат
-        sendBtn.addEventListener('click', () => {
-            const finalPrice = resultDiv.dataset.finalPrice;
-            const material = materialSelect.value;
-            const weight = weightRange.value;
-            const time = timeRange.value;
-            const margin = marginSelect.value;
-
-            const data = {
-                material: material,
-                weight: weight,
-                time: time,
-                margin: margin,
-                final_price: finalPrice
-            };
-
-            // Отправляем данные боту (бот должен быть настроен на приём)
-            tg.sendData(JSON.stringify(data));
-
-            // Показываем уведомление пользователю
-            tg.showPopup({
-                title: 'Готово!',
-                message: 'Расчёт отправлен в чат.',
-                buttons: [{type: 'ok'}]
-            });
-        });
-
-        // Слушаем изменения
-        materialSelect.addEventListener('change', recalculate);
-        weightRange.addEventListener('input', recalculate);
-        timeRange.addEventListener('input', recalculate);
-        marginSelect.addEventListener('change', recalculate);
-
-        // Первоначальный расчёт
-        recalculate();
-
-        // Адаптация к теме Telegram (уже через CSS переменные)
-        tg.ready();
-    </script>
-</body>
-</html>
+if __name__ == "__main__":
+    main()
