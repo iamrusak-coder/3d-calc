@@ -25,13 +25,13 @@
         .container { max-width: 500px; margin: 0 auto; }
         h2 { text-align: center; margin-bottom: 20px; }
         .tabs {
-            display: flex; gap: 10px; margin-bottom: 20px;
+            display: flex; gap: 6px; margin-bottom: 20px;
             border-bottom: 2px solid var(--secondary-bg); flex-wrap: wrap;
         }
         .tab {
-            flex: 1; text-align: center; padding: 12px 0; cursor: pointer;
+            flex: 1 0 auto; text-align: center; padding: 10px 6px; cursor: pointer;
             font-weight: 600; border-bottom: 3px solid transparent;
-            transition: 0.2s; font-size: 14px; white-space: nowrap;
+            transition: 0.2s; font-size: 13px; white-space: nowrap;
         }
         .tab.active { border-bottom-color: var(--button); color: var(--button); }
         .tab-panel { display: none; }
@@ -58,8 +58,8 @@
             cursor: pointer;
         }
         button.danger { background: #e74c3c; }
-        button.small { width: auto; padding: 8px 14px; margin: 4px; }
-        .material-item {
+        button.small { width: auto; padding: 6px 12px; margin: 2px; }
+        .material-item, .dict-item {
             display: flex; align-items: center; justify-content: space-between;
             background: var(--secondary-bg); padding: 10px; border-radius: 10px;
             margin-bottom: 8px; flex-wrap: wrap;
@@ -70,7 +70,7 @@
             border-radius: 50%; margin-right: 8px; vertical-align: middle;
             border: 1px solid #ccc;
         }
-        .add-material-form {
+        .add-material-form, .dict-form {
             background: var(--secondary-bg); border-radius: 12px;
             padding: 16px; margin-top: 16px;
         }
@@ -79,10 +79,7 @@
         .two-cols { display: flex; gap: 10px; }
         .two-cols > * { flex: 1; }
         .hidden { display: none; }
-        #ralPicker {
-            background: var(--secondary-bg); border-radius: 12px;
-            padding: 12px; margin-top: 8px;
-        }
+        #ralPicker { background: var(--secondary-bg); border-radius: 12px; padding: 12px; margin-top: 8px; }
     </style>
 </head>
 <body>
@@ -93,6 +90,7 @@
             <div class="tab active" data-tab="calc">📊 Расчёт</div>
             <div class="tab" data-tab="materials">🎨 Материалы</div>
             <div class="tab" data-tab="settings">⚙️ Настройки</div>
+            <div class="tab" data-tab="dictionaries">📋 Справочники</div>
         </div>
 
         <!-- РАСЧЁТ -->
@@ -129,7 +127,6 @@
             <h3>🎨 Список материалов</h3>
             <div id="materialsList"></div>
             <button id="showAddMaterial">➕ Добавить материал</button>
-
             <div class="add-material-form" id="addMaterialForm" style="display:none;">
                 <div class="form-group">
                     <label>Бренд</label>
@@ -138,16 +135,7 @@
                 </div>
                 <div class="form-group">
                     <label>Тип</label>
-                    <select id="typeSelect">
-                        <option value="">-- Выберите тип --</option>
-                        <option value="PLA">PLA</option><option value="PLA+">PLA+</option>
-                        <option value="ABS">ABS</option><option value="PETG">PETG</option>
-                        <option value="TPU">TPU</option><option value="ASA">ASA</option>
-                        <option value="Nylon">Nylon</option><option value="PC">PC</option>
-                        <option value="HIPS">HIPS</option><option value="PVA">PVA</option>
-                        <option value="Wood">Wood</option><option value="Metal">Metal</option>
-                        <option value="other">Другое...</option>
-                    </select>
+                    <select id="typeSelect"></select>
                     <input type="text" id="newTypeOther" class="hidden" placeholder="Введите тип">
                 </div>
                 <div class="form-group">
@@ -162,9 +150,7 @@
                         <button type="button" class="small" id="ralBtn">🎨 RAL</button>
                     </div>
                     <div id="ralPicker" class="hidden">
-                        <select id="ralSelect">
-                            <option value="">-- Выберите RAL --</option>
-                        </select>
+                        <select id="ralSelect"><option value="">-- Выберите RAL --</option></select>
                     </div>
                 </div>
                 <div class="two-cols">
@@ -197,9 +183,29 @@
                 <label>Амортизация (Br/час)</label>
                 <input type="number" id="amortInput" step="0.1" min="0" value="10.0">
             </div>
-            <p style="font-size:0.9em; opacity:0.8;">
-                Все суммы в белорусских рублях (Br). Изменения сохраняются автоматически.
-            </p>
+            <p style="font-size:0.9em; opacity:0.8;">Все суммы в белорусских рублях (Br). Изменения сохраняются автоматически.</p>
+        </div>
+
+        <!-- СПРАВОЧНИКИ -->
+        <div class="tab-panel" id="panel-dictionaries">
+            <h3>📋 Редактирование справочников</h3>
+            <div class="form-group">
+                <label>Бренды</label>
+                <div id="brandsList"></div>
+                <div style="display:flex; gap:8px; margin-top:8px;">
+                    <input type="text" id="newBrandInput" placeholder="Новый бренд">
+                    <button id="addBrandBtn" class="small">Добавить</button>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Типы пластика</label>
+                <div id="typesList"></div>
+                <div style="display:flex; gap:8px; margin-top:8px;">
+                    <input type="text" id="newTypeInput" placeholder="Новый тип">
+                    <button id="addTypeBtn" class="small">Добавить</button>
+                </div>
+            </div>
+            <p style="font-size:0.9em; opacity:0.8;">Удалённые элементы пропадут из списков выбора, но существующие материалы с ними сохранятся.</p>
         </div>
     </div>
 
@@ -220,20 +226,17 @@
             "серебряный": "#c0c0c0", "стальной": "#708090", "индиго": "#4b0082",
             "коралловый": "#ff7f50", "персиковый": "#ffdab9", "лавандовый": "#e6e6fa"
         };
-        // Преобразуем в массив {name, hex, r, g, b} для поиска ближайшего
         const colorList = Object.entries(colorNamesMap).map(([name, hex]) => {
             const r = parseInt(hex.slice(1,3),16);
             const g = parseInt(hex.slice(3,5),16);
             const b = parseInt(hex.slice(5,7),16);
             return {name, hex, r, g, b};
         });
-
         function findClosestColorName(hex) {
             const r = parseInt(hex.slice(1,3),16);
             const g = parseInt(hex.slice(3,5),16);
             const b = parseInt(hex.slice(5,7),16);
-            let minDist = Infinity;
-            let closest = '';
+            let minDist = Infinity, closest = '';
             for (let c of colorList) {
                 const dr = r - c.r, dg = g - c.g, db = b - c.b;
                 const dist = dr*dr + dg*dg + db*db;
@@ -242,31 +245,132 @@
             return closest;
         }
 
-        // RAL цвета (ограниченный набор)
         const ralColors = [
-            {ral: "RAL 1000", name: "Зелёно-бежевый", hex: "#BEBD7F"},
-            {ral: "RAL 1001", name: "Бежевый", hex: "#C2B078"},
-            {ral: "RAL 1011", name: "Коричнево-бежевый", hex: "#A57C5A"},
-            {ral: "RAL 2004", name: "Оранжевый", hex: "#E25303"},
-            {ral: "RAL 3000", name: "Огненно-красный", hex: "#A72920"},
-            {ral: "RAL 4006", name: "Фиолетовый", hex: "#993366"},
-            {ral: "RAL 5005", name: "Синий", hex: "#1E2460"},
-            {ral: "RAL 6001", name: "Изумрудно-зелёный", hex: "#28713D"},
-            {ral: "RAL 7004", name: "Серый", hex: "#9B9B9B"},
-            {ral: "RAL 9005", name: "Чёрный", hex: "#0A0A0A"},
-            {ral: "RAL 9010", name: "Белый", hex: "#F4F4F4"},
-            {ral: "RAL 9017", name: "Транспортный чёрный", hex: "#2B2B2B"}
+            {ral:"RAL 1000",name:"Зелёно-бежевый",hex:"#BEBD7F"},
+            {ral:"RAL 1001",name:"Бежевый",hex:"#C2B078"},
+            {ral:"RAL 1011",name:"Коричнево-бежевый",hex:"#A57C5A"},
+            {ral:"RAL 2004",name:"Оранжевый",hex:"#E25303"},
+            {ral:"RAL 3000",name:"Огненно-красный",hex:"#A72920"},
+            {ral:"RAL 4006",name:"Фиолетовый",hex:"#993366"},
+            {ral:"RAL 5005",name:"Синий",hex:"#1E2460"},
+            {ral:"RAL 6001",name:"Изумрудно-зелёный",hex:"#28713D"},
+            {ral:"RAL 7004",name:"Серый",hex:"#9B9B9B"},
+            {ral:"RAL 9005",name:"Чёрный",hex:"#0A0A0A"},
+            {ral:"RAL 9010",name:"Белый",hex:"#F4F4F4"},
+            {ral:"RAL 9017",name:"Транспортный чёрный",hex:"#2B2B2B"}
         ];
 
-        // ========== Статистика брендов ==========
-        function getBrandUsage() {
-            const saved = localStorage.getItem('brandUsage');
+        // ========== Управление справочниками и статистикой ==========
+        const DEFAULT_BRANDS = ["eSUN","BestFilament","Devil Design","Fiberlogy","Gembird","Creality","Hatchbox","Polymaker","Prusament"];
+        const DEFAULT_TYPES = ["PLA","PLA+","ABS","PETG","TPU","ASA","Nylon","PC","HIPS","PVA","Wood","Metal"];
+
+        function getDict(key, defaults) {
+            const saved = localStorage.getItem(key);
+            if (saved) { try { return JSON.parse(saved); } catch(e) {} }
+            return [...defaults];
+        }
+        function saveDict(key, arr) { localStorage.setItem(key, JSON.stringify(arr)); }
+
+        function getUsage(key) {
+            const saved = localStorage.getItem(key);
             return saved ? JSON.parse(saved) : {};
         }
-        function incrementBrandUsage(brand) {
-            const usage = getBrandUsage();
-            usage[brand] = (usage[brand] || 0) + 1;
-            localStorage.setItem('brandUsage', JSON.stringify(usage));
+        function incrementUsage(key, value) {
+            const usage = getUsage(key);
+            usage[value] = (usage[value] || 0) + 1;
+            localStorage.setItem(key, JSON.stringify(usage));
+        }
+
+        let customBrands = getDict('customBrands', DEFAULT_BRANDS);
+        let customTypes = getDict('customTypes', DEFAULT_TYPES);
+        let brandUsage = getUsage('brandUsage');
+        let typeUsage = getUsage('typeUsage');
+
+        function saveBrands() { saveDict('customBrands', customBrands); }
+        function saveTypes() { saveDict('customTypes', customTypes); }
+
+        // ========== Построение выпадающих списков брендов/типов с учётом статистики ==========
+        function populateBrandSelect() {
+            brandSelect.innerHTML = '<option value="">-- Выберите бренд --</option>';
+            const sorted = [...customBrands].sort((a,b) => {
+                const countA = brandUsage[a] || 0;
+                const countB = brandUsage[b] || 0;
+                if (countA !== countB) return countB - countA;
+                return a.localeCompare(b);
+            });
+            sorted.forEach(b => {
+                const opt = document.createElement('option');
+                opt.value = b;
+                opt.textContent = b + (brandUsage[b] ? ` (${brandUsage[b]})` : '');
+                brandSelect.appendChild(opt);
+            });
+            const otherOpt = document.createElement('option');
+            otherOpt.value = 'other';
+            otherOpt.textContent = 'Другое...';
+            brandSelect.appendChild(otherOpt);
+        }
+
+        function populateTypeSelect() {
+            typeSelect.innerHTML = '<option value="">-- Выберите тип --</option>';
+            const sorted = [...customTypes].sort((a,b) => {
+                const countA = typeUsage[a] || 0;
+                const countB = typeUsage[b] || 0;
+                if (countA !== countB) return countB - countA;
+                return a.localeCompare(b);
+            });
+            sorted.forEach(t => {
+                const opt = document.createElement('option');
+                opt.value = t;
+                opt.textContent = t + (typeUsage[t] ? ` (${typeUsage[t]})` : '');
+                typeSelect.appendChild(opt);
+            });
+            const otherOpt = document.createElement('option');
+            otherOpt.value = 'other';
+            otherOpt.textContent = 'Другое...';
+            typeSelect.appendChild(otherOpt);
+        }
+
+        // ========== Отображение справочников ==========
+        function renderBrandsList() {
+            const container = document.getElementById('brandsList');
+            container.innerHTML = '';
+            customBrands.forEach(b => {
+                const div = document.createElement('div');
+                div.className = 'dict-item';
+                div.innerHTML = `<span>${b}</span>`;
+                const delBtn = document.createElement('button');
+                delBtn.className = 'small danger';
+                delBtn.textContent = '🗑️';
+                delBtn.addEventListener('click', () => {
+                    customBrands = customBrands.filter(x => x !== b);
+                    saveBrands();
+                    renderBrandsList();
+                    populateBrandSelect();
+                });
+                div.appendChild(delBtn);
+                container.appendChild(div);
+            });
+        }
+
+        function renderTypesList() {
+            const container = document.getElementById('typesList');
+            container.innerHTML = '';
+            customTypes.forEach(t => {
+                const div = document.createElement('div');
+                div.className = 'dict-item';
+                div.innerHTML = `<span>${t}</span>`;
+                const delBtn = document.createElement('button');
+                delBtn.className = 'small danger';
+                delBtn.textContent = '🗑️';
+                delBtn.addEventListener('click', () => {
+                    customTypes = customTypes.filter(x => x !== t);
+                    saveTypes();
+                    renderTypesList();
+                    populateTypeSelect();
+                });
+                div.appendChild(delBtn);
+                container.appendChild(div);
+            });
         }
 
         // ========== Настройки по умолчанию ==========
@@ -287,7 +391,6 @@
             return JSON.parse(JSON.stringify(DEFAULT_SETTINGS));
         }
         function saveSettings(s) { localStorage.setItem('printCalcSettings', JSON.stringify(s)); }
-
         let settings = loadSettings();
 
         // ========== DOM элементы ==========
@@ -317,30 +420,6 @@
         const tariffInput = document.getElementById('tariffInput');
         const amortInput = document.getElementById('amortInput');
 
-        // ========== Заполнение брендов с учётом частоты ==========
-        function populateBrandSelect() {
-            const usage = getBrandUsage();
-            // Дефолтные бренды
-            const defaultBrands = ["eSUN","BestFilament","Devil Design","Fiberlogy","Gembird","Creality","Hatchbox","Polymaker","Prusament"];
-            // Собираем уникальные бренды из статистики и дефолта
-            let allBrands = [...new Set([...Object.keys(usage), ...defaultBrands])];
-            // Сортируем: сначала по убыванию частоты, потом по алфавиту
-            allBrands.sort((a,b) => {
-                const countA = usage[a] || 0;
-                const countB = usage[b] || 0;
-                if (countA !== countB) return countB - countA;
-                return a.localeCompare(b);
-            });
-            brandSelect.innerHTML = '<option value="">-- Выберите бренд --</option>';
-            allBrands.forEach(b => {
-                const opt = document.createElement('option');
-                opt.value = b;
-                opt.textContent = b + (usage[b] ? ` (${usage[b]})` : '');
-                brandSelect.appendChild(opt);
-            });
-            brandSelect.appendChild(new Option('Другое...', 'other'));
-        }
-
         // ========== Управление полем "Другое" ==========
         function toggleOther(select, input) {
             if (select.value === 'other') {
@@ -359,7 +438,6 @@
             const hex = newColorPicker.value;
             newColorText.value = findClosestColorName(hex);
         });
-        // При ручном вводе HEX тоже ищем название
         newColorText.addEventListener('change', () => {
             const val = newColorText.value.trim();
             if (/^#[0-9a-fA-F]{6}$/.test(val)) {
@@ -368,19 +446,15 @@
             }
         });
 
-        // RAL кнопка
         ralBtn.addEventListener('click', () => {
             ralPicker.classList.toggle('hidden');
-            if (!ralPicker.classList.contains('hidden')) {
-                // Заполняем список RAL, если ещё не заполнен
-                if (ralSelect.options.length <= 1) {
-                    ralColors.forEach(c => {
-                        const opt = document.createElement('option');
-                        opt.value = c.hex;
-                        opt.textContent = `${c.ral} ${c.name}`;
-                        ralSelect.appendChild(opt);
-                    });
-                }
+            if (!ralPicker.classList.contains('hidden') && ralSelect.options.length <= 1) {
+                ralColors.forEach(c => {
+                    const opt = document.createElement('option');
+                    opt.value = c.hex;
+                    opt.textContent = `${c.ral} ${c.name}`;
+                    ralSelect.appendChild(opt);
+                });
             }
         });
         ralSelect.addEventListener('change', () => {
@@ -442,8 +516,7 @@
                 b.addEventListener('click', (e) => {
                     const idx = e.target.dataset.index;
                     const m = settings.materials[idx];
-                    // Заполняем форму
-                    if (brandSelect.querySelector(`option[value="${m.brand}"]`)) {
+                    if (customBrands.includes(m.brand)) {
                         brandSelect.value = m.brand;
                         newBrandOther.classList.add('hidden');
                     } else {
@@ -451,7 +524,7 @@
                         newBrandOther.classList.remove('hidden');
                         newBrandOther.value = m.brand;
                     }
-                    if (typeSelect.querySelector(`option[value="${m.type}"]`)) {
+                    if (customTypes.includes(m.type)) {
                         typeSelect.value = m.type;
                         newTypeOther.classList.add('hidden');
                     } else {
@@ -489,8 +562,22 @@
                 settings.materials[editIdx] = material;
             } else {
                 settings.materials.push(material);
-                incrementBrandUsage(brand);
-                populateBrandSelect(); // обновим список брендов с учётом статистики
+                // Увеличиваем счётчики использования, только если бренд/тип есть в справочнике (или добавляем)
+                incrementUsage('brandUsage', brand);
+                brandUsage = getUsage('brandUsage');
+                incrementUsage('typeUsage', type);
+                typeUsage = getUsage('typeUsage');
+                // Если такого бренда/типа нет в справочнике — автоматически добавляем
+                if (!customBrands.includes(brand)) {
+                    customBrands.push(brand);
+                    saveBrands();
+                }
+                if (!customTypes.includes(type)) {
+                    customTypes.push(type);
+                    saveTypes();
+                }
+                populateBrandSelect();
+                populateTypeSelect();
             }
             saveSettings(settings);
             // Очистка формы
@@ -571,12 +658,7 @@
         }
         [powerInput, tariffInput, amortInput].forEach(inp => inp.addEventListener('change', saveGlobalParams));
 
-        // ========== События ==========
-        materialSelect.addEventListener('change', recalculate);
-        weightInput.addEventListener('input', recalculate);
-        timeInput.addEventListener('input', recalculate);
-        marginSelect.addEventListener('change', recalculate);
-
+        // ========== События вкладок ==========
         document.querySelectorAll('.tab').forEach(tab => {
             tab.addEventListener('click', () => {
                 document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
@@ -584,13 +666,18 @@
                 tab.classList.add('active');
                 const panel = document.getElementById('panel-' + tab.dataset.tab);
                 panel.classList.add('active');
-                if (tab.dataset.tab === 'materials') { renderMaterialsList(); }
-                if (tab.dataset.tab === 'settings') { loadGlobalParamsToForm(); }
+                if (tab.dataset.tab === 'materials') renderMaterialsList();
+                if (tab.dataset.tab === 'settings') loadGlobalParamsToForm();
+                if (tab.dataset.tab === 'dictionaries') {
+                    renderBrandsList();
+                    renderTypesList();
+                }
             });
         });
 
         document.getElementById('showAddMaterial').addEventListener('click', () => {
             populateBrandSelect();
+            populateTypeSelect();
             addMaterialForm.style.display = 'block';
             delete addMaterialForm.dataset.editIndex;
             brandSelect.value = ''; newBrandOther.classList.add('hidden'); newBrandOther.value = '';
@@ -606,8 +693,37 @@
             delete addMaterialForm.dataset.editIndex;
         });
 
+        // ========== Кнопки справочников ==========
+        document.getElementById('addBrandBtn').addEventListener('click', () => {
+            const newBrand = document.getElementById('newBrandInput').value.trim();
+            if (newBrand && !customBrands.includes(newBrand)) {
+                customBrands.push(newBrand);
+                saveBrands();
+                renderBrandsList();
+                populateBrandSelect();
+                document.getElementById('newBrandInput').value = '';
+            }
+        });
+        document.getElementById('addTypeBtn').addEventListener('click', () => {
+            const newType = document.getElementById('newTypeInput').value.trim();
+            if (newType && !customTypes.includes(newType)) {
+                customTypes.push(newType);
+                saveTypes();
+                renderTypesList();
+                populateTypeSelect();
+                document.getElementById('newTypeInput').value = '';
+            }
+        });
+
+        // ========== Обработчики расчёта ==========
+        materialSelect.addEventListener('change', recalculate);
+        weightInput.addEventListener('input', recalculate);
+        timeInput.addEventListener('input', recalculate);
+        marginSelect.addEventListener('change', recalculate);
+
         // Инициализация
         populateBrandSelect();
+        populateTypeSelect();
         updateMaterialSelect();
         recalculate();
     </script>
