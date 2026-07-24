@@ -2,67 +2,64 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Калькулятор 3D-печати</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         :root {
-            --bg: rgba(255,255,255,0.4);
+            --bg: rgba(255,255,255,0.25);
             --text: #1c1c1e;
             --button: #007aff;
             --button-text: #ffffff;
-            --glass: rgba(255,255,255,0.6);
-            --glass-strong: rgba(255,255,255,0.75);
-            --border: rgba(255,255,255,0.5);
-            --shadow: 0 8px 32px rgba(0,0,0,0.08);
-            --radius: 20px;
+            --glass: rgba(255,255,255,0.5);
+            --glass-strong: rgba(255,255,255,0.7);
+            --border: rgba(255,255,255,0.4);
+            --shadow: 0 8px 32px rgba(0,0,0,0.1);
+            --radius: 24px;
         }
         @media (prefers-color-scheme: dark) {
             :root {
-                --bg: rgba(28,28,30,0.5);
+                --bg: rgba(28,28,30,0.35);
                 --text: #f5f5f7;
                 --glass: rgba(255,255,255,0.12);
-                --glass-strong: rgba(255,255,255,0.18);
-                --border: rgba(255,255,255,0.2);
+                --glass-strong: rgba(255,255,255,0.2);
+                --border: rgba(255,255,255,0.25);
                 --shadow: 0 8px 32px rgba(0,0,0,0.4);
             }
         }
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        html, body {
+            width: 100%; height: 100%;
+            overflow: hidden;
             background: transparent;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             color: var(--text);
-            min-height: 100vh;
-            padding: 16px;
-            transition: background 0.3s, color 0.3s;
         }
         .background {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: var(--bg);
-            backdrop-filter: blur(30px);
-            -webkit-backdrop-filter: blur(30px);
-            z-index: -1;
+            backdrop-filter: blur(40px);
+            -webkit-backdrop-filter: blur(40px);
+            z-index: -2;
         }
-        .container {
-            max-width: 500px;
-            margin: 0 auto;
-            background: var(--glass);
-            border-radius: 32px;
-            padding: 24px 20px;
-            backdrop-filter: blur(30px);
-            -webkit-backdrop-filter: blur(30px);
-            border: 1px solid var(--border);
-            box-shadow: var(--shadow);
+        .app-container {
+            display: flex; flex-direction: column; height: 100%;
+            max-width: 600px; margin: 0 auto;
+            padding: env(safe-area-inset-top) 16px env(safe-area-inset-bottom) 16px;
         }
-        h2 { text-align: center; margin-bottom: 24px; font-size: 1.6em; font-weight: 700; }
+        .header {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 12px 0;
+        }
+        .header h2 { font-size: 1.8em; font-weight: 700; }
         .tabs {
-            display: flex; gap: 4px; margin-bottom: 24px;
+            display: flex; gap: 4px; margin-bottom: 12px;
             border-bottom: 2px solid var(--border); flex-wrap: wrap;
         }
         .tab {
-            flex: 1 0 auto; text-align: center; padding: 10px 6px; cursor: pointer;
+            flex: 1 0 auto; text-align: center; padding: 10px 4px; cursor: pointer;
             font-weight: 600; border-bottom: 3px solid transparent;
-            transition: 0.2s; font-size: 13px; white-space: nowrap;
+            transition: 0.2s; font-size: 14px; white-space: nowrap;
             background: transparent; color: var(--text); border-radius: 12px 12px 0 0;
         }
         .tab.active {
@@ -72,11 +69,15 @@
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
         }
+        .tab-content {
+            flex: 1; overflow-y: auto; padding-bottom: 20px;
+            -webkit-overflow-scrolling: touch;
+        }
         .tab-panel { display: none; animation: fadeIn 0.3s ease; }
         .tab-panel.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 
-        .form-group { margin-bottom: 20px; }
+        .form-group { margin-bottom: 16px; }
         label { display: block; margin-bottom: 6px; font-weight: 600; font-size: 0.95em; }
         select, input[type="range"], input[type="number"], input[type="text"], input[type="color"] {
             width: 100%; padding: 12px 14px; border-radius: 16px;
@@ -98,73 +99,59 @@
             box-shadow: 0 2px 8px rgba(0,0,0,0.2);
         }
         .range-labels { display: flex; justify-content: space-between; font-size: 12px; opacity: 0.7; margin-top: 4px; }
-        .result {
-            background: var(--glass-strong);
-            border-radius: 24px;
-            padding: 20px;
-            margin: 24px 0;
-            line-height: 1.5;
-            backdrop-filter: blur(25px);
-            -webkit-backdrop-filter: blur(25px);
+
+        .glass-card {
+            background: var(--glass);
+            border-radius: 20px;
+            padding: 16px;
+            margin-bottom: 16px;
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
             border: 1px solid var(--border);
             box-shadow: var(--shadow);
         }
+        .glass-card.light { background: var(--glass-strong); }
+
         .price { font-size: 28px; font-weight: 700; margin: 10px 0; transition: color 0.3s; }
+
         button {
             background: var(--glass-strong);
             color: var(--text);
             border: 1px solid var(--border);
             padding: 14px;
             border-radius: 20px;
-            font-size: 16px;
-            font-weight: 600;
-            width: 100%;
-            margin: 10px 0;
+            font-size: 16px; font-weight: 600; width: 100%; margin: 8px 0;
             cursor: pointer;
             backdrop-filter: blur(15px);
             -webkit-backdrop-filter: blur(15px);
             transition: all 0.2s;
         }
-        button.primary {
-            background: var(--button);
-            color: var(--button-text);
-            border: none;
-        }
-        button.danger {
-            background: rgba(255,59,48,0.2);
-            border-color: rgba(255,59,48,0.4);
-            color: #ff3b30;
-        }
-        button.small { width: auto; padding: 8px 16px; margin: 4px; font-size: 14px; border-radius: 14px; }
-        .material-item, .dict-item {
+        button.primary { background: var(--button); color: var(--button-text); border: none; }
+        button.danger { background: rgba(255,59,48,0.2); border-color: rgba(255,59,48,0.4); color: #ff3b30; }
+        button.small { width: auto; padding: 8px 14px; margin: 2px; font-size: 14px; border-radius: 14px; }
+
+        .parts-list { margin-bottom: 16px; }
+        .part-item {
             display: flex; align-items: center; justify-content: space-between;
-            background: var(--glass);
-            padding: 12px; border-radius: 16px;
-            margin-bottom: 10px;
-            flex-wrap: wrap;
-            backdrop-filter: blur(15px);
-            -webkit-backdrop-filter: blur(15px);
+            background: var(--glass); padding: 10px; border-radius: 14px;
+            margin-bottom: 8px; flex-wrap: wrap;
+            backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
             border: 1px solid var(--border);
         }
-        .material-info { flex: 1; }
-        .material-color {
-            display: inline-block; width: 20px; height: 20px;
-            border-radius: 50%; margin-right: 10px; vertical-align: middle;
+        .part-item .part-info { flex: 1; }
+        .color-dot {
+            display: inline-block; width: 18px; height: 18px;
+            border-radius: 50%; margin-right: 8px; vertical-align: middle;
             border: 1px solid rgba(0,0,0,0.2);
         }
-        .add-material-form, .dict-form {
-            background: var(--glass);
-            border-radius: 24px;
-            padding: 20px;
-            margin-top: 20px;
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid var(--border);
+
+        .archive-item {
+            background: var(--glass); border-radius: 16px; padding: 12px;
+            margin-bottom: 10px; border: 1px solid var(--border);
+            backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+            cursor: pointer; transition: background 0.2s;
         }
-        .add-material-form input, .add-material-form select { margin-bottom: 12px; }
-        .two-cols { display: flex; gap: 12px; }
-        .two-cols > * { flex: 1; }
-        .hidden { display: none; }
+        .archive-item:hover { background: var(--glass-strong); }
 
         .custom-select { position: relative; width: 100%; }
         .custom-select-trigger {
@@ -181,10 +168,10 @@
             background: var(--glass-strong);
             border: 1px solid var(--border);
             border-radius: 0 0 20px 20px;
-            max-height: 240px; overflow-y: auto;
+            max-height: 200px; overflow-y: auto;
             backdrop-filter: blur(25px);
             -webkit-backdrop-filter: blur(25px);
-            z-index: 10; display: none;
+            z-index: 20; display: none;
         }
         .custom-options.open { display: block; }
         .custom-option {
@@ -193,154 +180,149 @@
             transition: background 0.2s;
         }
         .custom-option:hover { background: var(--button); color: #fff; }
-        .color-dot {
-            display: inline-block; width: 20px; height: 20px;
-            border-radius: 50%; border: 1px solid rgba(0,0,0,0.2); flex-shrink: 0;
-        }
-        .sort-btns { margin-bottom: 12px; }
-        .sort-btns button { font-size: 13px; padding: 8px 14px; margin: 0; }
-        #ralSearchBlock {
-            background: var(--glass); border-radius: 16px; padding: 14px; margin-top: 10px;
-        }
-        #ralCodeInput { width: 100%; margin-bottom: 8px; }
     </style>
 </head>
 <body>
     <div class="background"></div>
-    <div class="container">
-        <h2>🧮 Расчёт 3D-печати</h2>
+    <div class="app-container">
+        <div class="header">
+            <h2>🧮 3D‑Печать</h2>
+        </div>
 
         <div class="tabs">
             <div class="tab active" data-tab="calc">📊 Расчёт</div>
             <div class="tab" data-tab="materials">🎨 Материалы</div>
+            <div class="tab" data-tab="archive">📦 Архив</div>
             <div class="tab" data-tab="settings">⚙️ Настройки</div>
             <div class="tab" data-tab="dictionaries">📋 Справочники</div>
         </div>
 
-        <div class="tab-panel active" id="panel-calc">
-            <div class="form-group">
-                <label>Название модели / заказа</label>
-                <input type="text" id="modelName" placeholder="например, Кронштейн v2">
-            </div>
-            <div class="form-group">
-                <label>Материал:</label>
-                <div class="custom-select" id="materialCustomSelect">
-                    <div class="custom-select-trigger" id="materialTrigger">
-                        <span class="color-dot" style="background:#ccc;"></span>
-                        <span id="materialTriggerText">Выберите материал</span>
-                    </div>
-                    <div class="custom-options" id="materialOptions"></div>
+        <div class="tab-content">
+            <!-- Расчёт -->
+            <div class="tab-panel active" id="panel-calc">
+                <div class="form-group">
+                    <label>Название заказа</label>
+                    <input type="text" id="modelName" placeholder="например, Корпус устройства">
                 </div>
-            </div>
-            <div class="form-group">
-                <label>Вес (г): <span id="weightValue">100</span> г</label>
-                <input type="range" id="weight" min="1" max="2000" value="100" step="1">
-                <div class="range-labels"><span>1</span><span>2000</span></div>
-            </div>
-            <div class="form-group">
-                <label>Время (ч): <span id="timeValue">4.0</span> ч</label>
-                <input type="range" id="time" min="0.5" max="48" value="4" step="0.5">
-                <div class="range-labels"><span>0.5</span><span>48</span></div>
-            </div>
-            <div class="form-group">
-                <label>Наценка:</label>
-                <select id="marginSelect">
-                    <option value="1.0">×1.0 (без наценки)</option>
-                    <option value="1.2" selected>×1.2 (+20%)</option>
-                    <option value="1.5">×1.5 (+50%)</option>
-                    <option value="2.0">×2.0 (+100%)</option>
-                </select>
-            </div>
-            <div class="result" id="result"></div>
-            <button id="sendBtn" class="primary">📤 Отправить расчёт в чат</button>
-            <button id="shareBtn">📋 Поделиться</button>
-        </div>
 
-        <div class="tab-panel" id="panel-materials">
-            <h3>🎨 Список материалов</h3>
-            <div class="sort-btns">
-                <button id="sortByType" class="small">По типу</button>
+                <div class="glass-card light">
+                    <label>Детали заказа (можно несколько)</label>
+                    <div class="parts-list" id="partsList"></div>
+                    <button id="addPartBtn" class="small">➕ Добавить деталь</button>
+                </div>
+
+                <div class="form-group">
+                    <label>Общая наценка:</label>
+                    <select id="marginSelect">
+                        <option value="1.0">×1.0 (без наценки)</option>
+                        <option value="1.2" selected>×1.2 (+20%)</option>
+                        <option value="1.5">×1.5 (+50%)</option>
+                        <option value="2.0">×2.0 (+100%)</option>
+                    </select>
+                </div>
+
+                <div class="glass-card" id="resultBlock">
+                    <div id="result"></div>
+                </div>
+
+                <button id="sendBtn" class="primary">📤 Отправить в чат</button>
+                <button id="shareBtn">📋 Поделиться</button>
             </div>
-            <div id="materialsList"></div>
-            <button id="showAddMaterial" class="primary">➕ Добавить материал</button>
-            <div class="add-material-form" id="addMaterialForm" style="display:none;">
-                <div class="form-group">
-                    <label>Бренд</label>
-                    <select id="brandSelect"></select>
-                    <input type="text" id="newBrandOther" class="hidden" placeholder="Введите бренд">
+
+            <!-- Материалы -->
+            <div class="tab-panel" id="panel-materials">
+                <h3>🎨 Список материалов</h3>
+                <div class="sort-btns" style="margin-bottom:12px;">
+                    <button id="sortByType" class="small">По типу</button>
                 </div>
-                <div class="form-group">
-                    <label>Тип</label>
-                    <select id="typeSelect"></select>
-                    <input type="text" id="newTypeOther" class="hidden" placeholder="Введите тип">
-                </div>
-                <div class="form-group">
-                    <label>Серия (опционально)</label>
-                    <input type="text" id="newSeries" placeholder="Pro, Silk, Easy...">
-                </div>
-                <div class="form-group">
-                    <label>Цвет</label>
-                    <div style="display:flex; gap:10px; align-items:center;">
-                        <input type="color" id="newColorPicker" value="#ff0000" style="width:60px; padding:0;">
-                        <input type="text" id="newColorText" placeholder="Название или HEX" style="flex:1;">
-                        <button type="button" class="small" id="ralBtn">🎨 RAL</button>
-                    </div>
-                    <div id="ralSearchBlock" class="hidden">
-                        <label>Введите код RAL (например, 4005)</label>
-                        <input type="text" id="ralCodeInput" placeholder="4005">
-                        <button class="small" id="ralSearchBtn">Найти</button>
-                        <div id="ralResult" style="margin-top:6px;"></div>
-                    </div>
-                </div>
-                <div class="two-cols">
+                <div id="materialsList"></div>
+                <button id="showAddMaterial" class="primary">➕ Добавить материал</button>
+                <div class="glass-card" id="addMaterialForm" style="display:none;">
                     <div class="form-group">
-                        <label>Цена за упак. (Br)</label>
-                        <input type="number" id="newPrice" step="0.01" min="0" value="30">
+                        <label>Бренд</label>
+                        <select id="brandSelect"></select>
+                        <input type="text" id="newBrandOther" class="hidden" placeholder="Введите бренд">
                     </div>
                     <div class="form-group">
-                        <label>Вес упак. (г)</label>
-                        <input type="number" id="newWeight" step="1" min="1" value="1000">
+                        <label>Тип</label>
+                        <select id="typeSelect"></select>
+                        <input type="text" id="newTypeOther" class="hidden" placeholder="Введите тип">
+                    </div>
+                    <div class="form-group">
+                        <label>Серия (опционально)</label>
+                        <input type="text" id="newSeries" placeholder="Pro, Silk, Easy...">
+                    </div>
+                    <div class="form-group">
+                        <label>Цвет</label>
+                        <div style="display:flex; gap:10px; align-items:center;">
+                            <input type="color" id="newColorPicker" value="#ff0000" style="width:60px; padding:0;">
+                            <input type="text" id="newColorText" placeholder="Название или HEX" style="flex:1;">
+                            <button type="button" class="small" id="ralBtn">🎨 RAL</button>
+                        </div>
+                        <div id="ralSearchBlock" class="hidden glass-card" style="margin-top:8px;">
+                            <label>Введите код RAL (например, 4005)</label>
+                            <input type="text" id="ralCodeInput" placeholder="4005">
+                            <button class="small" id="ralSearchBtn">Найти</button>
+                            <div id="ralResult" style="margin-top:6px;"></div>
+                        </div>
+                    </div>
+                    <div class="two-cols" style="display:flex; gap:12px;">
+                        <div class="form-group" style="flex:1;">
+                            <label>Цена за упак. (Br)</label>
+                            <input type="number" id="newPrice" step="0.01" min="0" value="30">
+                        </div>
+                        <div class="form-group" style="flex:1;">
+                            <label>Вес упак. (г)</label>
+                            <input type="number" id="newWeight" step="1" min="1" value="1000">
+                        </div>
+                    </div>
+                    <button id="saveNewMaterial" class="primary">💾 Сохранить</button>
+                    <button id="cancelAddMaterial" class="danger">Отмена</button>
+                </div>
+            </div>
+
+            <!-- Архив -->
+            <div class="tab-panel" id="panel-archive">
+                <h3>📦 Архив заказов</h3>
+                <div id="archiveList"></div>
+            </div>
+
+            <!-- Настройки -->
+            <div class="tab-panel" id="panel-settings">
+                <h3>🔧 Глобальные параметры</h3>
+                <div class="form-group">
+                    <label>Мощность принтера (кВт)</label>
+                    <input type="number" id="powerInput" step="0.01" min="0" value="0.15">
+                </div>
+                <div class="form-group">
+                    <label>Тариф за электричество (Br/кВт·ч)</label>
+                    <input type="number" id="tariffInput" step="0.01" min="0" value="0.25">
+                </div>
+                <div class="form-group">
+                    <label>Амортизация (Br/час)</label>
+                    <input type="number" id="amortInput" step="0.1" min="0" value="10.0">
+                </div>
+                <button id="resetSettings" class="danger">🔄 Сбросить настройки</button>
+            </div>
+
+            <!-- Справочники -->
+            <div class="tab-panel" id="panel-dictionaries">
+                <h3>📋 Справочники</h3>
+                <div class="form-group">
+                    <label>Бренды</label>
+                    <div id="brandsList"></div>
+                    <div style="display:flex; gap:8px; margin-top:8px;">
+                        <input type="text" id="newBrandInput" placeholder="Новый бренд">
+                        <button id="addBrandBtn" class="small">Добавить</button>
                     </div>
                 </div>
-                <button id="saveNewMaterial" class="primary">💾 Сохранить</button>
-                <button id="cancelAddMaterial" class="danger">Отмена</button>
-            </div>
-        </div>
-
-        <div class="tab-panel" id="panel-settings">
-            <h3>🔧 Глобальные параметры</h3>
-            <div class="form-group">
-                <label>Мощность принтера (кВт)</label>
-                <input type="number" id="powerInput" step="0.01" min="0" value="0.15">
-            </div>
-            <div class="form-group">
-                <label>Тариф за электричество (Br/кВт·ч)</label>
-                <input type="number" id="tariffInput" step="0.01" min="0" value="0.25">
-            </div>
-            <div class="form-group">
-                <label>Амортизация (Br/час)</label>
-                <input type="number" id="amortInput" step="0.1" min="0" value="10.0">
-            </div>
-            <p style="font-size:0.9em; opacity:0.8; margin: 20px 0;">Все суммы в белорусских рублях (Br).</p>
-            <button id="resetSettings" class="danger">🔄 Сбросить настройки</button>
-        </div>
-
-        <div class="tab-panel" id="panel-dictionaries">
-            <h3>📋 Редактирование справочников</h3>
-            <div class="form-group">
-                <label>Бренды</label>
-                <div id="brandsList"></div>
-                <div style="display:flex; gap:8px; margin-top:8px;">
-                    <input type="text" id="newBrandInput" placeholder="Новый бренд">
-                    <button id="addBrandBtn" class="small">Добавить</button>
-                </div>
-            </div>
-            <div class="form-group">
-                <label>Типы пластика</label>
-                <div id="typesList"></div>
-                <div style="display:flex; gap:8px; margin-top:8px;">
-                    <input type="text" id="newTypeInput" placeholder="Новый тип">
-                    <button id="addTypeBtn" class="small">Добавить</button>
+                <div class="form-group">
+                    <label>Типы пластика</label>
+                    <div id="typesList"></div>
+                    <div style="display:flex; gap:8px; margin-top:8px;">
+                        <input type="text" id="newTypeInput" placeholder="Новый тип">
+                        <button id="addTypeBtn" class="small">Добавить</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -567,35 +549,28 @@
         ];
 
         const colorNamesMap = {
-            "красный": "#ff0000", "алый": "#ff2400", "бордовый": "#800000",
-            "розовый": "#ffc0cb", "оранжевый": "#ffa500", "жёлтый": "#ffff00",
-            "золотой": "#ffd700", "зелёный": "#008000", "лайм": "#00ff00",
-            "бирюзовый": "#40e0d0", "голубой": "#00bfff", "синий": "#0000ff",
-            "фиолетовый": "#800080", "пурпурный": "#ff00ff", "белый": "#ffffff",
-            "серый": "#808080", "чёрный": "#000000", "коричневый": "#a52a2a",
-            "бежевый": "#f5f5dc", "кремовый": "#fffdd0", "хаки": "#c3b091",
-            "серебряный": "#c0c0c0", "стальной": "#708090", "индиго": "#4b0082",
-            "коралловый": "#ff7f50", "персиковый": "#ffdab9", "лавандовый": "#e6e6fa"
+            "красный":"#ff0000","алый":"#ff2400","бордовый":"#800000","розовый":"#ffc0cb",
+            "оранжевый":"#ffa500","жёлтый":"#ffff00","золотой":"#ffd700","зелёный":"#008000",
+            "лайм":"#00ff00","бирюзовый":"#40e0d0","голубой":"#00bfff","синий":"#0000ff",
+            "фиолетовый":"#800080","пурпурный":"#ff00ff","белый":"#ffffff","серый":"#808080",
+            "чёрный":"#000000","коричневый":"#a52a2a","бежевый":"#f5f5dc","кремовый":"#fffdd0",
+            "хаки":"#c3b091","серебряный":"#c0c0c0","стальной":"#708090","индиго":"#4b0082",
+            "коралловый":"#ff7f50","персиковый":"#ffdab9","лавандовый":"#e6e6fa"
         };
         const colorList = Object.entries(colorNamesMap).map(([name, hex]) => {
-            const r = parseInt(hex.slice(1,3),16);
-            const g = parseInt(hex.slice(3,5),16);
-            const b = parseInt(hex.slice(5,7),16);
+            const r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16);
             return {name, hex, r, g, b};
         });
         function findClosestColorName(hex) {
-            const r = parseInt(hex.slice(1,3),16);
-            const g = parseInt(hex.slice(3,5),16);
-            const b = parseInt(hex.slice(5,7),16);
+            const r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16);
             let minDist = Infinity, closest = '';
             for (let c of colorList) {
-                const dr = r - c.r, dg = g - c.g, db = b - c.b;
+                const dr = r-c.r, dg = g-c.g, db = b-c.b;
                 const dist = dr*dr + dg*dg + db*db;
                 if (dist < minDist) { minDist = dist; closest = c.name; }
             }
             return closest;
         }
-
         function getColorName(mat) {
             if (!mat || !mat.color) return 'нет';
             if (mat.color.startsWith('#')) return findClosestColorName(mat.color);
@@ -605,9 +580,7 @@
         const DEFAULT_BRANDS = ["eSUN","BestFilament","Devil Design","Fiberlogy","Gembird","Creality","Hatchbox","Polymaker","Prusament"];
         const DEFAULT_TYPES = ["PLA","PLA+","ABS","PETG","TPU","ASA","Nylon","PC","HIPS","PVA","Wood","Metal"];
         const DEFAULT_SETTINGS = {
-            power: 0.15,
-            tariff: 0.25,
-            amortization: 10.0,
+            power: 0.15, tariff: 0.25, amortization: 10.0,
             materials: [
                 {brand:"eSUN", type:"PLA+", series:"Pro", color:"#FF5733", pricePerPackage:30, packageWeight:1000},
                 {brand:"BestFilament", type:"ABS", series:"", color:"#33FF57", pricePerPackage:45, packageWeight:1000},
@@ -635,144 +608,8 @@
         let customTypes = getDict('customTypes', DEFAULT_TYPES);
         let brandUsage = getUsage('brandUsage');
         let typeUsage = getUsage('typeUsage');
-
         function saveBrands() { saveDict('customBrands', customBrands); }
         function saveTypes() { saveDict('customTypes', customTypes); }
-
-        function populateBrandSelect() {
-            brandSelect.innerHTML = '<option value="">-- Выберите бренд --</option>';
-            const sorted = [...customBrands].sort((a,b) => {
-                const countA = brandUsage[a] || 0;
-                const countB = brandUsage[b] || 0;
-                if (countA !== countB) return countB - countA;
-                return a.localeCompare(b);
-            });
-            sorted.forEach(b => {
-                const opt = document.createElement('option');
-                opt.value = b;
-                opt.textContent = b;
-                brandSelect.appendChild(opt);
-            });
-            const otherOpt = document.createElement('option');
-            otherOpt.value = 'other'; otherOpt.textContent = 'Другое...';
-            brandSelect.appendChild(otherOpt);
-        }
-
-        function populateTypeSelect() {
-            typeSelect.innerHTML = '<option value="">-- Выберите тип --</option>';
-            const sorted = [...customTypes].sort((a,b) => {
-                const countA = typeUsage[a] || 0;
-                const countB = typeUsage[b] || 0;
-                if (countA !== countB) return countB - countA;
-                return a.localeCompare(b);
-            });
-            sorted.forEach(t => {
-                const opt = document.createElement('option');
-                opt.value = t;
-                opt.textContent = t;
-                typeSelect.appendChild(opt);
-            });
-            const otherOpt = document.createElement('option');
-            otherOpt.value = 'other'; otherOpt.textContent = 'Другое...';
-            typeSelect.appendChild(otherOpt);
-        }
-
-        let selectedMaterialIndex = null;
-        const materialTrigger = document.getElementById('materialTrigger');
-        const materialTriggerText = document.getElementById('materialTriggerText');
-        const materialOptions = document.getElementById('materialOptions');
-        const materialCustomSelect = document.getElementById('materialCustomSelect');
-
-        function updateCustomMaterialSelect() {
-            materialOptions.innerHTML = '';
-            if (settings.materials.length === 0) {
-                const opt = document.createElement('div');
-                opt.className = 'custom-option';
-                opt.textContent = 'Нет материалов';
-                materialOptions.appendChild(opt);
-                materialTriggerText.textContent = 'Выберите материал';
-                materialTrigger.querySelector('.color-dot').style.background = '#ccc';
-                selectedMaterialIndex = null;
-                return;
-            }
-            settings.materials.forEach((mat, index) => {
-                const opt = document.createElement('div');
-                opt.className = 'custom-option';
-                opt.dataset.index = index;
-                const ppg = (mat.pricePerPackage / mat.packageWeight).toFixed(3);
-                const colorName = getColorName(mat);
-                opt.innerHTML = `<span class="color-dot" style="background:${mat.color || '#ccc'}"></span> ${mat.brand} ${mat.type}${mat.series?' '+mat.series:''} — ${ppg} Br/г (${colorName})`;
-                opt.addEventListener('click', () => {
-                    selectMaterial(index);
-                    materialOptions.classList.remove('open');
-                });
-                materialOptions.appendChild(opt);
-            });
-
-            if (selectedMaterialIndex !== null && settings.materials[selectedMaterialIndex]) {
-                selectMaterial(selectedMaterialIndex);
-            } else if (settings.materials.length > 0) {
-                selectMaterial(0);
-            }
-        }
-
-        function selectMaterial(index) {
-            const mat = settings.materials[index];
-            if (!mat) return;
-            selectedMaterialIndex = index;
-            const ppg = (mat.pricePerPackage / mat.packageWeight).toFixed(3);
-            const colorName = getColorName(mat);
-            materialTriggerText.textContent = `${mat.brand} ${mat.type}${mat.series?' '+mat.series:''} — ${ppg} Br/г (${colorName})`;
-            materialTrigger.querySelector('.color-dot').style.background = mat.color || '#ccc';
-            recalculate();
-        }
-
-        materialTrigger.addEventListener('click', () => materialOptions.classList.toggle('open'));
-        document.addEventListener('click', (e) => {
-            if (!materialCustomSelect.contains(e.target)) materialOptions.classList.remove('open');
-        });
-
-        function renderBrandsList() {
-            const container = document.getElementById('brandsList');
-            container.innerHTML = '';
-            customBrands.forEach(b => {
-                const div = document.createElement('div');
-                div.className = 'dict-item';
-                div.innerHTML = `<span>${b}</span>`;
-                const delBtn = document.createElement('button');
-                delBtn.className = 'small danger';
-                delBtn.textContent = '🗑️';
-                delBtn.addEventListener('click', () => {
-                    customBrands = customBrands.filter(x => x !== b);
-                    saveBrands();
-                    renderBrandsList();
-                    populateBrandSelect();
-                });
-                div.appendChild(delBtn);
-                container.appendChild(div);
-            });
-        }
-
-        function renderTypesList() {
-            const container = document.getElementById('typesList');
-            container.innerHTML = '';
-            customTypes.forEach(t => {
-                const div = document.createElement('div');
-                div.className = 'dict-item';
-                div.innerHTML = `<span>${t}</span>`;
-                const delBtn = document.createElement('button');
-                delBtn.className = 'small danger';
-                delBtn.textContent = '🗑️';
-                delBtn.addEventListener('click', () => {
-                    customTypes = customTypes.filter(x => x !== t);
-                    saveTypes();
-                    renderTypesList();
-                    populateTypeSelect();
-                });
-                div.appendChild(delBtn);
-                container.appendChild(div);
-            });
-        }
 
         function loadSettings() {
             const saved = localStorage.getItem('printCalcSettings');
@@ -782,217 +619,146 @@
         function saveSettings(s) { localStorage.setItem('printCalcSettings', JSON.stringify(s)); }
         let settings = loadSettings();
 
-        let sortByTypeAsc = true;
-        function sortByType() {
-            sortByTypeAsc = !sortByTypeAsc;
-            settings.materials.sort((a,b) => {
-                const nameA = a.type.toLowerCase();
-                const nameB = b.type.toLowerCase();
-                if (nameA < nameB) return sortByTypeAsc ? -1 : 1;
-                if (nameA > nameB) return sortByTypeAsc ? 1 : -1;
-                return 0;
-            });
-            saveSettings(settings);
-            renderMaterialsList();
-            updateCustomMaterialSelect();
-        }
+        let currentOrder = {
+            modelName: '',
+            parts: [
+                { materialIndex: 0, weight: 100, time: 4.0 }
+            ]
+        };
+        let selectedPartIndex = null;
 
-        const weightInput = document.getElementById('weight');
-        const weightValue = document.getElementById('weightValue');
-        const timeInput = document.getElementById('time');
-        const timeValue = document.getElementById('timeValue');
+        const modelNameInput = document.getElementById('modelName');
+        const partsListDiv = document.getElementById('partsList');
         const marginSelect = document.getElementById('marginSelect');
         const resultDiv = document.getElementById('result');
         const sendBtn = document.getElementById('sendBtn');
         const shareBtn = document.getElementById('shareBtn');
-        const modelNameInput = document.getElementById('modelName');
-        const materialsListDiv = document.getElementById('materialsList');
-        const addMaterialForm = document.getElementById('addMaterialForm');
-        const brandSelect = document.getElementById('brandSelect');
-        const newBrandOther = document.getElementById('newBrandOther');
-        const typeSelect = document.getElementById('typeSelect');
-        const newTypeOther = document.getElementById('newTypeOther');
-        const newSeries = document.getElementById('newSeries');
-        const newColorPicker = document.getElementById('newColorPicker');
-        const newColorText = document.getElementById('newColorText');
-        const ralBtn = document.getElementById('ralBtn');
-        const ralSearchBlock = document.getElementById('ralSearchBlock');
-        const ralCodeInput = document.getElementById('ralCodeInput');
-        const ralSearchBtn = document.getElementById('ralSearchBtn');
-        const ralResult = document.getElementById('ralResult');
-        const newPrice = document.getElementById('newPrice');
-        const newWeight = document.getElementById('newWeight');
-        const powerInput = document.getElementById('powerInput');
-        const tariffInput = document.getElementById('tariffInput');
-        const amortInput = document.getElementById('amortInput');
-        const resetSettingsBtn = document.getElementById('resetSettings');
+        const addPartBtn = document.getElementById('addPartBtn');
+        const archiveListDiv = document.getElementById('archiveList');
 
-        function toggleOther(select, input) {
-            if (select.value === 'other') {
-                input.classList.remove('hidden');
-                input.focus();
-            } else {
-                input.classList.add('hidden');
-                input.value = '';
-            }
-        }
-        brandSelect.addEventListener('change', () => toggleOther(brandSelect, newBrandOther));
-        typeSelect.addEventListener('change', () => toggleOther(typeSelect, newTypeOther));
-
-        newColorPicker.addEventListener('input', () => {
-            const hex = newColorPicker.value;
-            newColorText.value = findClosestColorName(hex);
-        });
-        newColorText.addEventListener('change', () => {
-            const val = newColorText.value.trim();
-            if (/^#[0-9a-fA-F]{6}$/.test(val)) {
-                newColorPicker.value = val;
-                newColorText.value = findClosestColorName(val);
-            }
-        });
-
-        ralBtn.addEventListener('click', () => {
-            ralSearchBlock.classList.toggle('hidden');
-            ralCodeInput.value = '';
-            ralResult.innerHTML = '';
-        });
-        ralSearchBtn.addEventListener('click', () => {
-            const code = ralCodeInput.value.trim().toUpperCase();
-            const found = ralColorsFull.find(c => c.code.replace('RAL ','') === code || c.code === `RAL ${code}`);
-            if (found) {
-                newColorPicker.value = found.hex;
-                newColorText.value = `${found.name} (${found.code})`;
-                ralResult.innerHTML = `✅ Найден: ${found.code} ${found.name}`;
-            } else {
-                ralResult.innerHTML = `❌ RAL ${code} не найден`;
-            }
-        });
-
-        function renderMaterialsList() {
-            materialsListDiv.innerHTML = '';
-            settings.materials.forEach((mat, index) => {
+        function updateMaterialSelectForPart(selectElement, selectedIndex) {
+            selectElement.innerHTML = '';
+            settings.materials.forEach((mat, idx) => {
+                const opt = document.createElement('option');
+                opt.value = idx;
                 const ppg = (mat.pricePerPackage / mat.packageWeight).toFixed(3);
-                const colorName = getColorName(mat);
+                opt.textContent = `${mat.brand} ${mat.type}${mat.series?' '+mat.series:''} — ${ppg} Br/г (${getColorName(mat)})`;
+                selectElement.appendChild(opt);
+            });
+            selectElement.value = selectedIndex;
+        }
+
+        function renderParts() {
+            partsListDiv.innerHTML = '';
+            currentOrder.parts.forEach((part, idx) => {
+                const mat = settings.materials[part.materialIndex] || settings.materials[0];
+                const ppg = (mat.pricePerPackage / mat.packageWeight).toFixed(3);
                 const div = document.createElement('div');
-                div.className = 'material-item';
+                div.className = 'part-item';
                 div.innerHTML = `
-                    <div class="material-info">
-                        <span class="material-color" style="background:${mat.color||'#ccc'}"></span>
-                        <strong>${mat.brand} ${mat.type} ${mat.series}</strong>
-                        <span style="color:${mat.color||'#ccc'}"> (${colorName})</span><br>
-                        <small>Цена: ${mat.pricePerPackage} Br / ${mat.packageWeight} г (≈${ppg} Br/г)</small>
+                    <div class="part-info">
+                        <span class="color-dot" style="background:${mat.color||'#ccc'}"></span>
+                        <strong>${mat.brand} ${mat.type}</strong> (${getColorName(mat)})<br>
+                        <small>Вес: ${part.weight} г, Время: ${part.time} ч, Цена: ${(part.weight * mat.pricePerPackage / mat.packageWeight).toFixed(2)} Br</small>
                     </div>
                     <div>
-                        <button class="edit-material small" data-index="${index}">✏️</button>
-                        <button class="delete-material small danger" data-index="${index}">🗑️</button>
+                        <button class="edit-part small" data-index="${idx}">✏️</button>
+                        <button class="delete-part small danger" data-index="${idx}">🗑️</button>
                     </div>`;
-                materialsListDiv.appendChild(div);
+                partsListDiv.appendChild(div);
             });
-            document.querySelectorAll('.delete-material').forEach(b => {
-                b.addEventListener('click', (e) => {
-                    const idx = e.target.dataset.index;
-                    settings.materials.splice(idx,1);
-                    saveSettings(settings);
-                    renderMaterialsList();
-                    updateCustomMaterialSelect();
+
+            document.querySelectorAll('.edit-part').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const idx = parseInt(e.target.dataset.index);
+                    openPartEditor(idx);
                 });
             });
-            document.querySelectorAll('.edit-material').forEach(b => {
-                b.addEventListener('click', (e) => {
-                    const idx = e.target.dataset.index;
-                    const m = settings.materials[idx];
-                    if (customBrands.includes(m.brand)) {
-                        brandSelect.value = m.brand;
-                        newBrandOther.classList.add('hidden');
-                    } else {
-                        brandSelect.value = 'other';
-                        newBrandOther.classList.remove('hidden');
-                        newBrandOther.value = m.brand;
+            document.querySelectorAll('.delete-part').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const idx = parseInt(e.target.dataset.index);
+                    currentOrder.parts.splice(idx, 1);
+                    if (currentOrder.parts.length === 0) {
+                        currentOrder.parts.push({ materialIndex: 0, weight: 100, time: 4.0 });
                     }
-                    if (customTypes.includes(m.type)) {
-                        typeSelect.value = m.type;
-                        newTypeOther.classList.add('hidden');
-                    } else {
-                        typeSelect.value = 'other';
-                        newTypeOther.classList.remove('hidden');
-                        newTypeOther.value = m.type;
-                    }
-                    newSeries.value = m.series || '';
-                    newColorPicker.value = m.color || '#ff0000';
-                    newColorText.value = m.color || '';
-                    newPrice.value = m.pricePerPackage;
-                    newWeight.value = m.packageWeight;
-                    addMaterialForm.style.display = 'block';
-                    addMaterialForm.dataset.editIndex = idx;
+                    renderParts();
+                    recalculate();
                 });
             });
         }
 
-        function saveMaterial() {
-            let brand = brandSelect.value;
-            if (brand === 'other') brand = newBrandOther.value.trim();
-            let type = typeSelect.value;
-            if (type === 'other') type = newTypeOther.value.trim();
-            const series = newSeries.value.trim();
-            const color = newColorText.value.trim() || newColorPicker.value;
-            const price = parseFloat(newPrice.value);
-            const weight = parseFloat(newWeight.value);
-            if (!brand || !type || isNaN(price) || price<=0 || isNaN(weight) || weight<=0) {
-                alert('Заполните бренд, тип, цену и вес корректно.');
-                return;
-            }
-            const material = { brand, type, series, color, pricePerPackage: price, packageWeight: weight };
-            const editIdx = addMaterialForm.dataset.editIndex;
-            if (editIdx !== undefined && editIdx !== '') {
-                settings.materials[editIdx] = material;
-            } else {
-                settings.materials.push(material);
-                incrementUsage('brandUsage', brand);
-                brandUsage = getUsage('brandUsage');
-                incrementUsage('typeUsage', type);
-                typeUsage = getUsage('typeUsage');
-                if (!customBrands.includes(brand)) {
-                    customBrands.push(brand);
-                    saveBrands();
+        function openPartEditor(index) {
+            selectedPartIndex = index;
+            const part = currentOrder.parts[index];
+            const mat = settings.materials[part.materialIndex];
+            showModal(`
+                <div class="form-group">
+                    <label>Материал</label>
+                    <select id="editPartMaterial"></select>
+                </div>
+                <div class="form-group">
+                    <label>Вес (г)</label>
+                    <input type="number" id="editPartWeight" value="${part.weight}" step="1" min="1">
+                </div>
+                <div class="form-group">
+                    <label>Время печати (ч)</label>
+                    <input type="number" id="editPartTime" value="${part.time}" step="0.5" min="0.5">
+                </div>
+                <button id="savePartBtn" class="primary">Сохранить</button>
+                <button id="cancelPartBtn" class="danger">Отмена</button>
+            `);
+            const materialSelect = document.getElementById('editPartMaterial');
+            updateMaterialSelectForPart(materialSelect, part.materialIndex);
+            document.getElementById('savePartBtn').addEventListener('click', () => {
+                const newMatIdx = parseInt(materialSelect.value);
+                const weight = parseFloat(document.getElementById('editPartWeight').value);
+                const time = parseFloat(document.getElementById('editPartTime').value);
+                if (isNaN(weight) || weight <= 0 || isNaN(time) || time <= 0) {
+                    alert('Некорректные значения');
+                    return;
                 }
-                if (!customTypes.includes(type)) {
-                    customTypes.push(type);
-                    saveTypes();
-                }
-                populateBrandSelect();
-                populateTypeSelect();
-            }
-            saveSettings(settings);
-            brandSelect.value = ''; newBrandOther.classList.add('hidden'); newBrandOther.value='';
-            typeSelect.value = ''; newTypeOther.classList.add('hidden'); newTypeOther.value='';
-            newSeries.value = ''; newColorPicker.value = '#ff0000'; newColorText.value = '';
-            newPrice.value = '30'; newWeight.value = '1000';
-            addMaterialForm.style.display = 'none';
-            delete addMaterialForm.dataset.editIndex;
-            renderMaterialsList();
-            updateCustomMaterialSelect();
+                currentOrder.parts[selectedPartIndex] = { materialIndex: newMatIdx, weight, time };
+                closeModal();
+                renderParts();
+                recalculate();
+            });
+            document.getElementById('cancelPartBtn').addEventListener('click', closeModal);
         }
+
+        addPartBtn.addEventListener('click', () => {
+            const newIdx = currentOrder.parts.length;
+            currentOrder.parts.push({ materialIndex: 0, weight: 100, time: 4.0 });
+            renderParts();
+            recalculate();
+        });
 
         function recalculate() {
-            if (selectedMaterialIndex === null || settings.materials.length === 0) {
-                resultDiv.innerHTML = '<p>Добавьте материалы во вкладке «🎨 Материалы».</p>';
+            if (settings.materials.length === 0 || currentOrder.parts.length === 0) {
+                resultDiv.innerHTML = '<p>Добавьте материалы и детали.</p>';
                 return;
             }
-            const mat = settings.materials[selectedMaterialIndex];
-            if (!mat) return;
-            const weight = parseFloat(weightInput.value);
-            const time = parseFloat(timeInput.value);
             const margin = parseFloat(marginSelect.value);
-            const ppg = mat.pricePerPackage / mat.packageWeight;
-            const plasticCost = weight * ppg;
-            const electricityCost = settings.power * time * settings.tariff;
-            const amortization = settings.amortization * time;
-            const costPrice = plasticCost + electricityCost + amortization;
-            const finalPrice = costPrice * margin;
+            let totalCost = 0;
+            const details = [];
+            currentOrder.parts.forEach((part, idx) => {
+                const mat = settings.materials[part.materialIndex];
+                if (!mat) return;
+                const ppg = mat.pricePerPackage / mat.packageWeight;
+                const plasticCost = part.weight * ppg;
+                const electricityCost = settings.power * part.time * settings.tariff;
+                const amortization = settings.amortization * part.time;
+                const partCost = plasticCost + electricityCost + amortization;
+                totalCost += partCost;
+                details.push({ idx, mat, ppg, plasticCost, electricityCost, amortization, partCost, weight: part.weight, time: part.time });
+            });
+            const finalPrice = totalCost * margin;
 
-            weightValue.textContent = weight;
-            timeValue.textContent = time.toFixed(1);
-            const colorName = getColorName(mat);
+            let detailsHtml = details.map(d => `
+                <div style="margin-bottom:6px; padding-bottom:6px; border-bottom:1px solid var(--border);">
+                    <span class="color-dot" style="background:${d.mat.color||'#ccc'}"></span>
+                    ${d.mat.brand} ${d.mat.type} — ${d.weight} г, ${d.time} ч = ${d.partCost.toFixed(2)} Br
+                </div>
+            `).join('');
 
             let priceColor;
             if (margin <= 1.0) priceColor = '#34c759';
@@ -1001,174 +767,114 @@
             else priceColor = '#ff3b30';
 
             resultDiv.innerHTML = `
-                <strong>📊 Детали расчёта</strong><br>
-                ▪ Материал: ${mat.brand} ${mat.type} ${mat.series} (${colorName}) (${ppg.toFixed(3)} Br/г)<br>
-                ▪ Вес: ${weight} г → ${plasticCost.toFixed(2)} Br<br>
-                ▪ Время: ${time.toFixed(1)} ч<br>
-                ▪ Электричество: ${electricityCost.toFixed(2)} Br<br>
-                ▪ Амортизация: ${amortization.toFixed(2)} Br<br>
-                ▪ Себестоимость: ${costPrice.toFixed(2)} Br<br>
-                <div class="price" style="color:${priceColor}">💰 Итого: ${finalPrice.toFixed(2)} Br</div>`;
+                <div style="font-size:0.9em; opacity:0.8; margin-bottom:8px;">${detailsHtml}</div>
+                <div class="price" style="color:${priceColor}">💰 Итого: ${finalPrice.toFixed(2)} Br</div>
+            `;
             resultDiv.dataset.finalPrice = finalPrice.toFixed(2);
-            resultDiv.dataset.costPrice = costPrice.toFixed(2);
+            resultDiv.dataset.totalCost = totalCost.toFixed(2);
         }
 
-        function generateShareText() {
-            const modelName = modelNameInput.value.trim() || 'Без названия';
-            const mat = settings.materials[selectedMaterialIndex];
-            if (!mat) return '';
-            const ppg = (mat.pricePerPackage / mat.packageWeight).toFixed(3);
-            const weight = weightInput.value;
-            const time = timeInput.value;
-            const costPrice = resultDiv.dataset.costPrice;
-            const finalPrice = resultDiv.dataset.finalPrice;
-            return `📊 Расчёт 3D-печати: ${modelName}\n` +
-                   `▪ Материал: ${mat.brand} ${mat.type} ${mat.series} (${getColorName(mat)}) ≈${ppg} Br/г\n` +
-                   `▪ Вес: ${weight} г\n` +
-                   `▪ Время печати: ${time} ч\n` +
-                   `💰 Итого к оплате: ${finalPrice} Br`;
+        function saveOrderToArchive() {
+            const archive = JSON.parse(localStorage.getItem('orderArchive') || '[]');
+            const orderCopy = JSON.parse(JSON.stringify(currentOrder));
+            orderCopy.timestamp = Date.now();
+            orderCopy.finalPrice = resultDiv.dataset.finalPrice;
+            archive.push(orderCopy);
+            localStorage.setItem('orderArchive', JSON.stringify(archive));
+        }
+
+        function loadArchive() {
+            archiveListDiv.innerHTML = '';
+            const archive = JSON.parse(localStorage.getItem('orderArchive') || '[]');
+            if (archive.length === 0) {
+                archiveListDiv.innerHTML = '<p>Архив пуст.</p>';
+                return;
+            }
+            archive.sort((a,b) => b.timestamp - a.timestamp);
+            archive.forEach((order, index) => {
+                const div = document.createElement('div');
+                div.className = 'archive-item';
+                div.innerHTML = `
+                    <strong>${order.modelName || 'Без названия'}</strong><br>
+                    <small>${new Date(order.timestamp).toLocaleString()}</small> — 
+                    <strong>${order.finalPrice} Br</strong>
+                    <button class="load-order small" data-index="${index}">🔄 Загрузить</button>
+                    <button class="delete-order small danger" data-index="${index}">🗑️</button>
+                `;
+                archiveListDiv.appendChild(div);
+            });
+            document.querySelectorAll('.load-order').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const idx = parseInt(e.target.dataset.index);
+                    currentOrder = JSON.parse(JSON.stringify(archive[idx]));
+                    modelNameInput.value = currentOrder.modelName || '';
+                    renderParts();
+                    recalculate();
+                    document.querySelector('.tab[data-tab="calc"]').click();
+                });
+            });
+            document.querySelectorAll('.delete-order').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const idx = parseInt(e.target.dataset.index);
+                    archive.splice(idx, 1);
+                    localStorage.setItem('orderArchive', JSON.stringify(archive));
+                    loadArchive();
+                });
+            });
         }
 
         sendBtn.addEventListener('click', () => {
             if (!tg?.sendData) { alert('Только внутри Telegram'); return; }
-            if (selectedMaterialIndex === null) return;
-            const mat = settings.materials[selectedMaterialIndex];
-            const modelName = modelNameInput.value.trim() || 'Без названия';
+            currentOrder.modelName = modelNameInput.value.trim() || 'Без названия';
+            saveOrderToArchive();
+            loadArchive();
             const data = {
-                model: modelName,
-                material: `${mat.brand} ${mat.type} ${mat.series}`,
-                color: getColorName(mat),
-                weight: weightInput.value,
-                time: timeInput.value,
-                margin: marginSelect.value,
+                model: currentOrder.modelName,
+                parts: currentOrder.parts.map(p => ({
+                    material: `${settings.materials[p.materialIndex].brand} ${settings.materials[p.materialIndex].type}`,
+                    weight: p.weight,
+                    time: p.time
+                })),
                 final_price: resultDiv.dataset.finalPrice + ' Br'
             };
             tg.sendData(JSON.stringify(data));
-            tg.showPopup({ title: 'Готово', message: `Расчёт "${modelName}" отправлен.` });
+            tg.showPopup({ title: 'Готово', message: `Заказ "${currentOrder.modelName}" отправлен.` });
         });
 
         shareBtn.addEventListener('click', async () => {
-            const text = generateShareText();
+            currentOrder.modelName = modelNameInput.value.trim() || 'Без названия';
+            let text = `📊 Заказ: ${currentOrder.modelName}\n`;
+            currentOrder.parts.forEach(p => {
+                const mat = settings.materials[p.materialIndex];
+                text += `▪ ${mat.brand} ${mat.type} — ${p.weight} г, ${p.time} ч\n`;
+            });
+            text += `💰 Итого: ${resultDiv.dataset.finalPrice} Br`;
             if (navigator.share) {
-                try {
-                    await navigator.share({ title: 'Расчёт 3D-печати', text: text });
-                } catch (e) {}
+                try { await navigator.share({ title: 'Расчёт 3D-печати', text }); } catch(e) {}
             } else {
-                try {
-                    await navigator.clipboard.writeText(text);
-                    alert('Расчёт скопирован в буфер обмена.');
-                } catch (e) {
-                    alert('Не удалось поделиться.');
-                }
+                try { await navigator.clipboard.writeText(text); alert('Скопировано в буфер.'); } catch(e) { alert('Не удалось.'); }
             }
         });
 
-        function loadGlobalParamsToForm() {
-            powerInput.value = settings.power;
-            tariffInput.value = settings.tariff;
-            amortInput.value = settings.amortization;
-        }
-        function saveGlobalParams() {
-            settings.power = parseFloat(powerInput.value) || 0.15;
-            settings.tariff = parseFloat(tariffInput.value) || 0.25;
-            settings.amortization = parseFloat(amortInput.value) || 10.0;
-            saveSettings(settings);
-            recalculate();
-        }
+        modelNameInput.addEventListener('input', recalculate);
+        marginSelect.addEventListener('change', recalculate);
         [powerInput, tariffInput, amortInput].forEach(inp => inp.addEventListener('change', saveGlobalParams));
-
-        resetSettingsBtn.addEventListener('click', () => {
-            if (confirm('Вы уверены, что хотите сбросить все настройки и материалы к заводским?')) {
-                localStorage.removeItem('printCalcSettings');
-                localStorage.removeItem('customBrands');
-                localStorage.removeItem('customTypes');
-                localStorage.removeItem('brandUsage');
-                localStorage.removeItem('typeUsage');
-                customBrands = [...DEFAULT_BRANDS];
-                customTypes = [...DEFAULT_TYPES];
-                brandUsage = {};
-                typeUsage = {};
-                saveBrands();
-                saveTypes();
-                settings = JSON.parse(JSON.stringify(DEFAULT_SETTINGS));
-                saveSettings(settings);
-                loadGlobalParamsToForm();
-                renderBrandsList();
-                renderTypesList();
-                populateBrandSelect();
-                populateTypeSelect();
-                updateCustomMaterialSelect();
-                renderMaterialsList();
-                recalculate();
-                alert('Настройки сброшены.');
-            }
-        });
 
         document.querySelectorAll('.tab').forEach(tab => {
             tab.addEventListener('click', () => {
                 document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
                 document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
                 tab.classList.add('active');
-                const panel = document.getElementById('panel-' + tab.dataset.tab);
-                panel.classList.add('active');
-                if (tab.dataset.tab === 'materials') renderMaterialsList();
-                if (tab.dataset.tab === 'settings') loadGlobalParamsToForm();
-                if (tab.dataset.tab === 'dictionaries') {
-                    renderBrandsList();
-                    renderTypesList();
-                }
+                document.getElementById('panel-' + tab.dataset.tab).classList.add('active');
+                if (tab.dataset.tab === 'archive') loadArchive();
+                if (tab.dataset.tab === 'materials') renderMaterials();
+                if (tab.dataset.tab === 'dictionaries') { renderBrands(); renderTypes(); }
             });
         });
 
-        document.getElementById('showAddMaterial').addEventListener('click', () => {
-            populateBrandSelect();
-            populateTypeSelect();
-            addMaterialForm.style.display = 'block';
-            delete addMaterialForm.dataset.editIndex;
-            brandSelect.value = ''; newBrandOther.classList.add('hidden'); newBrandOther.value = '';
-            typeSelect.value = ''; newTypeOther.classList.add('hidden'); newTypeOther.value = '';
-            newSeries.value = ''; newColorPicker.value = '#ff0000'; newColorText.value = '';
-            newPrice.value = '30'; newWeight.value = '1000';
-            ralSearchBlock.classList.add('hidden');
-        });
-
-        document.getElementById('saveNewMaterial').addEventListener('click', saveMaterial);
-        document.getElementById('cancelAddMaterial').addEventListener('click', () => {
-            addMaterialForm.style.display = 'none';
-            delete addMaterialForm.dataset.editIndex;
-        });
-
-        document.getElementById('addBrandBtn').addEventListener('click', () => {
-            const newBrand = document.getElementById('newBrandInput').value.trim();
-            if (newBrand && !customBrands.includes(newBrand)) {
-                customBrands.push(newBrand);
-                saveBrands();
-                renderBrandsList();
-                populateBrandSelect();
-                document.getElementById('newBrandInput').value = '';
-            }
-        });
-        document.getElementById('addTypeBtn').addEventListener('click', () => {
-            const newType = document.getElementById('newTypeInput').value.trim();
-            if (newType && !customTypes.includes(newType)) {
-                customTypes.push(newType);
-                saveTypes();
-                renderTypesList();
-                populateTypeSelect();
-                document.getElementById('newTypeInput').value = '';
-            }
-        });
-
-        document.getElementById('sortByType').addEventListener('click', sortByType);
-
-        weightInput.addEventListener('input', recalculate);
-        timeInput.addEventListener('input', recalculate);
-        marginSelect.addEventListener('change', recalculate);
-
-        populateBrandSelect();
-        populateTypeSelect();
-        updateCustomMaterialSelect();
+        renderParts();
         recalculate();
+        loadArchive();
     </script>
 </body>
 </html>
