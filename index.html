@@ -42,7 +42,9 @@
             align-items: center;
             justify-content: center;
             padding: env(safe-area-inset-top, 12px) 12px env(safe-area-inset-bottom, 12px) 12px;
-            touch-action: none;
+            position: fixed;
+            top: 0;
+            left: 0;
         }
 
         .app-container {
@@ -95,7 +97,6 @@
             overflow-y: auto;
             overscroll-behavior: contain;
             padding: 20px 18px 24px;
-            touch-action: pan-y;
             -webkit-overflow-scrolling: touch;
         }
 
@@ -223,10 +224,14 @@
             </div>
             <div class="tab-panel" id="panel-settings">
                 <h3>🔧 Глобальные параметры</h3>
-                <div class="form-group"><label>Мощность (кВт)</label><input type="number" id="powerInput" value="0.15" step="0.01"></div>
+                <div class="form-group"><label>Мощность принтера (кВт)</label><input type="number" id="powerInput" value="0.15" step="0.01"></div>
                 <div class="form-group"><label>Тариф (Br/кВт·ч)</label><input type="number" id="tariffInput" value="0.25" step="0.01"></div>
                 <div class="form-group"><label>Амортизация (Br/ч)</label><input type="number" id="amortInput" value="10.0" step="0.1"></div>
-                <button id="resetSettings" class="danger">🔄 Сбросить настройки</button>
+                <hr style="border-color:var(--border); margin:20px 0;">
+                <h4>🧯 Сушилка филамента</h4>
+                <div class="form-group"><label>Мощность сушилки (кВт)</label><input type="number" id="dryerPower" value="0.3" step="0.01"></div>
+                <div class="form-group"><label>Время сушки (ч)</label><input type="number" id="dryerTime" value="6" step="0.5"></div>
+                <button id="saveSettingsBtn" class="primary">💾 Сохранить настройки</button>
             </div>
             <div class="tab-panel" id="panel-dictionaries">
                 <h3>📋 Бренды и типы</h3>
@@ -301,16 +306,11 @@
         const tg = window.Telegram?.WebApp;
         if (tg) { tg.ready(); tg.expand(); }
 
-        document.addEventListener('touchmove', function(e) {
-            if (!e.target.closest('.tab-content')) {
-                e.preventDefault();
-            }
-        }, { passive: false });
-
         const DEFAULT_BRANDS = ["eSUN","BestFilament","Devil Design","Fiberlogy"];
         const DEFAULT_TYPES = ["PLA","ABS","PETG","TPU"];
         const DEFAULT_SETTINGS = {
             power: 0.15, tariff: 0.25, amortization: 10.0,
+            dryerPower: 0.3, dryerTime: 6,
             materials: [
                 {brand:"eSUN", type:"PLA+", series:"Pro", color:"#FF5733", pricePerPackage:30, packageWeight:1000},
                 {brand:"BestFilament", type:"ABS", series:"", color:"#33FF57", pricePerPackage:45, packageWeight:1000}
@@ -415,11 +415,21 @@
                     <div class="detail-row" style="font-weight:600; margin-top:8px;"><span>📦 Сумма по детали</span><span>${partTotal.toFixed(2)} Br</span></div>
                 </div>`;
             });
+
+            let dryerCost = 0;
+            if (settings.dryerPower && settings.dryerTime) {
+                dryerCost = settings.dryerPower * settings.dryerTime * settings.tariff;
+                totalCost += dryerCost;
+            }
+
             let final = totalCost * margin;
+            let dryerRow = dryerCost > 0 ? `<div class="detail-row"><span>🧯 Сушка филамента</span><span>${dryerCost.toFixed(2)} Br</span></div><hr>` : '';
+
             document.getElementById('result').innerHTML = `
                 <div style="margin-bottom:16px; font-weight:600;">📊 Сводка заказа</div>
                 ${details}
                 <div class="summary-block">
+                    ${dryerRow}
                     <div class="detail-row"><span>🔹 Себестоимость всех деталей</span><span><strong>${totalCost.toFixed(2)} Br</strong></span></div>
                     <hr>
                     <div class="detail-row" style="font-size:1.2em; font-weight:700;"><span>💰 Итого к оплате (×${margin})</span><span style="color:${margin<=1?'#34c759':margin<=1.2?'#ffcc00':margin<=1.5?'#ff9500':'#ff3b30'}">${final.toFixed(2)} Br</span></div>
@@ -583,15 +593,25 @@
             });
         }
 
-        document.getElementById('powerInput').addEventListener('change', function() { settings.power = +this.value; saveAll(); recalc(); });
-        document.getElementById('tariffInput').addEventListener('change', function() { settings.tariff = +this.value; saveAll(); recalc(); });
-        document.getElementById('amortInput').addEventListener('change', function() { settings.amortization = +this.value; saveAll(); recalc(); });
-        document.getElementById('resetSettings').addEventListener('click', () => {
-            if (!confirm('Сбросить все настройки и материалы?')) return;
-            ['settings','brands','types','brandUsage','typeUsage','orders'].forEach(k => localStorage.removeItem(k));
-            location.reload();
+        // Настройки
+        document.getElementById('powerInput').value = settings.power;
+        document.getElementById('tariffInput').value = settings.tariff;
+        document.getElementById('amortInput').value = settings.amortization;
+        document.getElementById('dryerPower').value = settings.dryerPower || 0.3;
+        document.getElementById('dryerTime').value = settings.dryerTime || 6;
+
+        document.getElementById('saveSettingsBtn').addEventListener('click', () => {
+            settings.power = parseFloat(document.getElementById('powerInput').value) || 0.15;
+            settings.tariff = parseFloat(document.getElementById('tariffInput').value) || 0.25;
+            settings.amortization = parseFloat(document.getElementById('amortInput').value) || 10.0;
+            settings.dryerPower = parseFloat(document.getElementById('dryerPower').value) || 0;
+            settings.dryerTime = parseFloat(document.getElementById('dryerTime').value) || 0;
+            saveAll();
+            recalc();
+            alert('Настройки сохранены');
         });
 
+        // Вкладки
         document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => {
             document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
             document.querySelectorAll('.tab-panel').forEach(x => x.classList.remove('active'));
@@ -601,9 +621,12 @@
                 document.getElementById('powerInput').value = settings.power;
                 document.getElementById('tariffInput').value = settings.tariff;
                 document.getElementById('amortInput').value = settings.amortization;
+                document.getElementById('dryerPower').value = settings.dryerPower || 0.3;
+                document.getElementById('dryerTime').value = settings.dryerTime || 6;
             }
         }));
 
+        // Инициализация
         populateAllSelects();
         updatePartMaterialSelect();
         renderMaterialsList();
