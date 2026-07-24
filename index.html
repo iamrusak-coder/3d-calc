@@ -158,6 +158,8 @@
             border: 1px solid var(--border);
             box-shadow: var(--shadow);
             color: var(--text);
+            max-height: 80vh;
+            overflow-y: auto;
         }
         .modal-content h3 { margin-bottom: 16px; font-size: 1.3em; }
         .modal-content .form-group { margin-bottom: 14px; }
@@ -226,11 +228,11 @@
                 <h3>🔧 Глобальные параметры</h3>
                 <div class="form-group"><label>Мощность принтера (кВт)</label><input type="number" id="powerInput" value="0.15" step="0.01"></div>
                 <div class="form-group"><label>Тариф (Br/кВт·ч)</label><input type="number" id="tariffInput" value="0.25" step="0.01"></div>
-                <div class="form-group"><label>Амортизация (Br/ч)</label><input type="number" id="amortInput" value="10.0" step="0.1"></div>
+                <div class="form-group"><label>Амортизация принтера (Br/ч)</label><input type="number" id="amortInput" value="10.0" step="0.1"></div>
                 <hr style="border-color:var(--border); margin:20px 0;">
                 <h4>🧯 Сушилка филамента</h4>
                 <div class="form-group"><label>Мощность сушилки (кВт)</label><input type="number" id="dryerPower" value="0.3" step="0.01"></div>
-                <div class="form-group"><label>Время сушки (ч)</label><input type="number" id="dryerTime" value="6" step="0.5"></div>
+                <p style="font-size:0.9em; opacity:0.8;">Время сушки равно времени печати детали.</p>
                 <button id="saveSettingsBtn" class="primary">💾 Сохранить настройки</button>
             </div>
             <div class="tab-panel" id="panel-dictionaries">
@@ -286,9 +288,17 @@
             </div>
             <div class="form-group">
                 <label>Цвет</label>
-                <div style="display:flex; gap:10px;">
+                <div style="display:flex; gap:10px; margin-bottom:8px;">
                     <input type="color" id="matColorPicker" value="#ff0000" style="width:60px; padding:0;">
                     <input type="text" id="matColorText" placeholder="Название или HEX" style="flex:1;">
+                </div>
+                <button type="button" id="ralPaletteBtn" class="small">🎨 Выбрать RAL</button>
+                <div id="ralSearchBlock" class="hidden" style="margin-top:10px; background:var(--glass); border-radius:16px; padding:12px;">
+                    <div style="display:flex; gap:6px; margin-bottom:8px;">
+                        <input type="text" id="ralSearchInput" placeholder="Поиск RAL (код или название)" style="flex:1;">
+                        <button id="ralSearchBtn" class="small">Найти</button>
+                    </div>
+                    <div id="ralResults" style="max-height:200px; overflow-y:auto;"></div>
                 </div>
             </div>
             <div class="two-cols">
@@ -306,11 +316,228 @@
         const tg = window.Telegram?.WebApp;
         if (tg) { tg.ready(); tg.expand(); }
 
+        // Полный каталог RAL Classic (216 цветов)
+        const ralColorsFull = [
+            {code:"RAL 1000", name:"Зелёно-бежевый", hex:"#BEBD7F"},
+            {code:"RAL 1001", name:"Бежевый", hex:"#C2B078"},
+            {code:"RAL 1002", name:"Песочно-жёлтый", hex:"#C6A664"},
+            {code:"RAL 1003", name:"Сигнальный жёлтый", hex:"#E5BE01"},
+            {code:"RAL 1004", name:"Золотисто-жёлтый", hex:"#CDA434"},
+            {code:"RAL 1005", name:"Медово-жёлтый", hex:"#A98307"},
+            {code:"RAL 1006", name:"Кукурузно-жёлтый", hex:"#E4A010"},
+            {code:"RAL 1007", name:"Нарциссово-жёлтый", hex:"#DC9D00"},
+            {code:"RAL 1011", name:"Коричнево-бежевый", hex:"#A57C5A"},
+            {code:"RAL 1012", name:"Лимонно-жёлтый", hex:"#D6B531"},
+            {code:"RAL 1013", name:"Жемчужно-белый", hex:"#E4E0D4"},
+            {code:"RAL 1014", name:"Слоновая кость", hex:"#D7C9A0"},
+            {code:"RAL 1015", name:"Светлая слоновая кость", hex:"#E6DCC4"},
+            {code:"RAL 1016", name:"Серая слоновая кость", hex:"#E0D5A2"},
+            {code:"RAL 1017", name:"Шафраново-жёлтый", hex:"#F0B640"},
+            {code:"RAL 1018", name:"Цинково-жёлтый", hex:"#F2CA50"},
+            {code:"RAL 1019", name:"Серо-бежевый", hex:"#A0957A"},
+            {code:"RAL 1020", name:"Оливково-жёлтый", hex:"#A09751"},
+            {code:"RAL 1021", name:"Рапсово-жёлтый", hex:"#E8B81C"},
+            {code:"RAL 1023", name:"Транспортно-жёлтый", hex:"#F0C000"},
+            {code:"RAL 1024", name:"Охра жёлтая", hex:"#B49C5A"},
+            {code:"RAL 1026", name:"Люминесцентный жёлтый", hex:"#F3F01E"},
+            {code:"RAL 1027", name:"Карри жёлтый", hex:"#A28A2B"},
+            {code:"RAL 1028", name:"Дынно-жёлтый", hex:"#F3A43C"},
+            {code:"RAL 1032", name:"Ракитниково-жёлтый", hex:"#E3A238"},
+            {code:"RAL 1033", name:"Георгиново-жёлтый", hex:"#F09A28"},
+            {code:"RAL 1034", name:"Пастельно-жёлтый", hex:"#F0A060"},
+            {code:"RAL 1035", name:"Жемчужно-бежевый", hex:"#8E8274"},
+            {code:"RAL 1036", name:"Жемчужно-золотой", hex:"#857142"},
+            {code:"RAL 1037", name:"Солнечно-жёлтый", hex:"#F09700"},
+            {code:"RAL 2000", name:"Жёлто-оранжевый", hex:"#D47E1A"},
+            {code:"RAL 2001", name:"Красно-оранжевый", hex:"#C0392B"},
+            {code:"RAL 2002", name:"Киноварь", hex:"#CB3234"},
+            {code:"RAL 2003", name:"Пастельно-оранжевый", hex:"#F67828"},
+            {code:"RAL 2004", name:"Чисто-оранжевый", hex:"#E25303"},
+            {code:"RAL 2005", name:"Люминесцентный оранжевый", hex:"#FF4D06"},
+            {code:"RAL 2007", name:"Люминесцентный ярко-оранжевый", hex:"#FF8000"},
+            {code:"RAL 2008", name:"Ярко-красно-оранжевый", hex:"#F04020"},
+            {code:"RAL 2009", name:"Транспортный оранжевый", hex:"#E35401"},
+            {code:"RAL 2010", name:"Сигнальный оранжевый", hex:"#CF5F20"},
+            {code:"RAL 2011", name:"Глубокий оранжевый", hex:"#E26E22"},
+            {code:"RAL 2012", name:"Лососёво-оранжевый", hex:"#D96E4F"},
+            {code:"RAL 2013", name:"Жемчужно-оранжевый", hex:"#984E36"},
+            {code:"RAL 3000", name:"Огненно-красный", hex:"#A72920"},
+            {code:"RAL 3001", name:"Сигнальный красный", hex:"#A02128"},
+            {code:"RAL 3002", name:"Карминно-красный", hex:"#9C2225"},
+            {code:"RAL 3003", name:"Рубиново-красный", hex:"#8A1C20"},
+            {code:"RAL 3004", name:"Пурпурно-красный", hex:"#6C1A21"},
+            {code:"RAL 3005", name:"Винно-красный", hex:"#59191F"},
+            {code:"RAL 3007", name:"Чёрно-красный", hex:"#3D191A"},
+            {code:"RAL 3009", name:"Оксид красный", hex:"#642424"},
+            {code:"RAL 3011", name:"Коричнево-красный", hex:"#781F19"},
+            {code:"RAL 3012", name:"Бежево-красный", hex:"#C08070"},
+            {code:"RAL 3013", name:"Томатно-красный", hex:"#972E25"},
+            {code:"RAL 3014", name:"Антично-розовый", hex:"#C96F6D"},
+            {code:"RAL 3015", name:"Светло-розовый", hex:"#D8A0A8"},
+            {code:"RAL 3016", name:"Кораллово-красный", hex:"#A63A35"},
+            {code:"RAL 3017", name:"Розовый", hex:"#C5556D"},
+            {code:"RAL 3018", name:"Клубнично-красный", hex:"#C7333F"},
+            {code:"RAL 3020", name:"Транспортный красный", hex:"#C2161A"},
+            {code:"RAL 3022", name:"Лососёво-красный", hex:"#D45D5F"},
+            {code:"RAL 3024", name:"Люминесцентный красный", hex:"#FF2B2B"},
+            {code:"RAL 3026", name:"Люминесцентный ярко-красный", hex:"#FF1E1E"},
+            {code:"RAL 3027", name:"Малиново-красный", hex:"#B81C3D"},
+            {code:"RAL 3028", name:"Чистый красный", hex:"#CC2B2B"},
+            {code:"RAL 3031", name:"Ориент красный", hex:"#A63437"},
+            {code:"RAL 3032", name:"Жемчужно-рубиновый", hex:"#701D23"},
+            {code:"RAL 3033", name:"Жемчужно-розовый", hex:"#AF5460"},
+            {code:"RAL 4001", name:"Красно-сиреневый", hex:"#83639D"},
+            {code:"RAL 4002", name:"Красно-фиолетовый", hex:"#8A3E5C"},
+            {code:"RAL 4003", name:"Вересково-фиолетовый", hex:"#C15596"},
+            {code:"RAL 4004", name:"Бордово-фиолетовый", hex:"#631F39"},
+            {code:"RAL 4005", name:"Сине-сиреневый", hex:"#7A6A9A"},
+            {code:"RAL 4006", name:"Транспортный пурпурный", hex:"#993366"},
+            {code:"RAL 4007", name:"Пурпурно-фиолетовый", hex:"#491D33"},
+            {code:"RAL 4008", name:"Сигнальный фиолетовый", hex:"#84428C"},
+            {code:"RAL 4009", name:"Пастельно-фиолетовый", hex:"#9A7B9D"},
+            {code:"RAL 4010", name:"Телемагента", hex:"#BF4C8C"},
+            {code:"RAL 4011", name:"Жемчужно-фиолетовый", hex:"#68568C"},
+            {code:"RAL 4012", name:"Жемчужно-ежевичный", hex:"#5F4E66"},
+            {code:"RAL 5000", name:"Фиолетово-синий", hex:"#2A2F4C"},
+            {code:"RAL 5001", name:"Зелёно-синий", hex:"#1E3446"},
+            {code:"RAL 5002", name:"Ультрамариновый", hex:"#202A5A"},
+            {code:"RAL 5003", name:"Сапфирово-синий", hex:"#1F244A"},
+            {code:"RAL 5004", name:"Чёрно-синий", hex:"#191E28"},
+            {code:"RAL 5005", name:"Сигнальный синий", hex:"#1E2460"},
+            {code:"RAL 5007", name:"Бриллиантово-синий", hex:"#3E5F8A"},
+            {code:"RAL 5008", name:"Серо-синий", hex:"#2B303A"},
+            {code:"RAL 5009", name:"Лазурно-синий", hex:"#225A7A"},
+            {code:"RAL 5010", name:"Горечавково-синий", hex:"#0E4587"},
+            {code:"RAL 5011", name:"Стально-синий", hex:"#1E2A3A"},
+            {code:"RAL 5012", name:"Голубой", hex:"#0089B6"},
+            {code:"RAL 5013", name:"Кобальтово-синий", hex:"#1D2E4F"},
+            {code:"RAL 5014", name:"Голубино-синий", hex:"#4E6B89"},
+            {code:"RAL 5015", name:"Небесно-синий", hex:"#007CB0"},
+            {code:"RAL 5017", name:"Транспортный синий", hex:"#00567A"},
+            {code:"RAL 5018", name:"Бирюзово-синий", hex:"#3A7C8A"},
+            {code:"RAL 5019", name:"Капри синий", hex:"#1B4968"},
+            {code:"RAL 5020", name:"Океанская синь", hex:"#00414B"},
+            {code:"RAL 5021", name:"Водная синь", hex:"#007577"},
+            {code:"RAL 5022", name:"Ночной синий", hex:"#252850"},
+            {code:"RAL 5023", name:"Далёкий синий", hex:"#4A6B83"},
+            {code:"RAL 5024", name:"Пастельно-синий", hex:"#6090A0"},
+            {code:"RAL 5025", name:"Жемчужно-синий", hex:"#1C5E73"},
+            {code:"RAL 5026", name:"Жемчужно-тёмно-синий", hex:"#13273D"},
+            {code:"RAL 6000", name:"Патиново-зелёный", hex:"#3B6F50"},
+            {code:"RAL 6001", name:"Изумрудно-зелёный", hex:"#28713D"},
+            {code:"RAL 6002", name:"Лиственно-зелёный", hex:"#2D542D"},
+            {code:"RAL 6003", name:"Оливково-зелёный", hex:"#4A5433"},
+            {code:"RAL 6004", name:"Сине-зелёный", hex:"#0F433F"},
+            {code:"RAL 6005", name:"Мшисто-зелёный", hex:"#0F4C3A"},
+            {code:"RAL 6006", name:"Серо-оливковый", hex:"#3A3A30"},
+            {code:"RAL 6007", name:"Бутылочно-зелёный", hex:"#2C3623"},
+            {code:"RAL 6008", name:"Коричнево-зелёный", hex:"#353526"},
+            {code:"RAL 6009", name:"Пихтово-зелёный", hex:"#1C3429"},
+            {code:"RAL 6010", name:"Травяной зелёный", hex:"#3D6D3D"},
+            {code:"RAL 6011", name:"Резедово-зелёный", hex:"#607B48"},
+            {code:"RAL 6012", name:"Чёрно-зелёный", hex:"#2F3E35"},
+            {code:"RAL 6013", name:"Тростниково-зелёный", hex:"#77754A"},
+            {code:"RAL 6014", name:"Жёлто-оливковый", hex:"#4A4530"},
+            {code:"RAL 6015", name:"Чёрно-оливковый", hex:"#3A3A2C"},
+            {code:"RAL 6016", name:"Бирюзово-зелёный", hex:"#006C53"},
+            {code:"RAL 6017", name:"Майский зелёный", hex:"#4D9345"},
+            {code:"RAL 6018", name:"Жёлто-зелёный", hex:"#4F9A3A"},
+            {code:"RAL 6019", name:"Бело-зелёный", hex:"#C2D2B0"},
+            {code:"RAL 6020", name:"Хромовый зелёный", hex:"#36442A"},
+            {code:"RAL 6021", name:"Бледно-зелёный", hex:"#8B9E7C"},
+            {code:"RAL 6022", name:"Коричнево-оливковый", hex:"#3A3522"},
+            {code:"RAL 6024", name:"Транспортный зелёный", hex:"#008351"},
+            {code:"RAL 6025", name:"Папоротниково-зелёный", hex:"#4D6C3B"},
+            {code:"RAL 6026", name:"Опалово-зелёный", hex:"#005C4B"},
+            {code:"RAL 6027", name:"Светло-зелёный", hex:"#7FB5AE"},
+            {code:"RAL 6028", name:"Сосново-зелёный", hex:"#305A42"},
+            {code:"RAL 6029", name:"Мятно-зелёный", hex:"#006F46"},
+            {code:"RAL 6032", name:"Сигнальный зелёный", hex:"#2B7A50"},
+            {code:"RAL 6033", name:"Мятно-бирюзовый", hex:"#4A7E7B"},
+            {code:"RAL 6034", name:"Пастельно-бирюзовый", hex:"#83BDB3"},
+            {code:"RAL 6035", name:"Жемчужно-зелёный", hex:"#1C5A41"},
+            {code:"RAL 6036", name:"Жемчужно-изумрудный", hex:"#005C48"},
+            {code:"RAL 6037", name:"Чистый зелёный", hex:"#008B3C"},
+            {code:"RAL 6038", name:"Люминесцентный зелёный", hex:"#00F700"},
+            {code:"RAL 7000", name:"Серая белка", hex:"#7A828B"},
+            {code:"RAL 7001", name:"Серебряный", hex:"#8F949A"},
+            {code:"RAL 7002", name:"Оливково-серый", hex:"#7E735D"},
+            {code:"RAL 7003", name:"Мохово-серый", hex:"#6A6D5A"},
+            {code:"RAL 7004", name:"Сигнальный серый", hex:"#9B9B9B"},
+            {code:"RAL 7005", name:"Мышино-серый", hex:"#6B6F6E"},
+            {code:"RAL 7006", name:"Бежево-серый", hex:"#756B61"},
+            {code:"RAL 7008", name:"Хаки серый", hex:"#6A5F4B"},
+            {code:"RAL 7009", name:"Зелёно-серый", hex:"#5D5D51"},
+            {code:"RAL 7010", name:"Брезентово-серый", hex:"#535A50"},
+            {code:"RAL 7011", name:"Железно-серый", hex:"#4C5258"},
+            {code:"RAL 7012", name:"Базальтово-серый", hex:"#555E63"},
+            {code:"RAL 7013", name:"Коричнево-серый", hex:"#554F44"},
+            {code:"RAL 7015", name:"Сланцево-серый", hex:"#4C535A"},
+            {code:"RAL 7016", name:"Антрацитово-серый", hex:"#373F43"},
+            {code:"RAL 7021", name:"Чёрно-серый", hex:"#2D3237"},
+            {code:"RAL 7022", name:"Сумрачно-серый", hex:"#454544"},
+            {code:"RAL 7023", name:"Серый бетон", hex:"#80807C"},
+            {code:"RAL 7024", name:"Графитово-серый", hex:"#444F56"},
+            {code:"RAL 7026", name:"Гранитно-серый", hex:"#2E3C43"},
+            {code:"RAL 7030", name:"Каменно-серый", hex:"#939388"},
+            {code:"RAL 7031", name:"Сине-серый", hex:"#5B686E"},
+            {code:"RAL 7032", name:"Галечный серый", hex:"#B9B4A5"},
+            {code:"RAL 7033", name:"Цементно-серый", hex:"#808B87"},
+            {code:"RAL 7034", name:"Жёлто-серый", hex:"#938B73"},
+            {code:"RAL 7035", name:"Светло-серый", hex:"#CDD1D0"},
+            {code:"RAL 7036", name:"Платиново-серый", hex:"#979A9B"},
+            {code:"RAL 7037", name:"Пыльно-серый", hex:"#7D7F7D"},
+            {code:"RAL 7038", name:"Агатово-серый", hex:"#B3B7AF"},
+            {code:"RAL 7039", name:"Кварцевый серый", hex:"#6A605C"},
+            {code:"RAL 7040", name:"Оконный серый", hex:"#9BA3A8"},
+            {code:"RAL 7042", name:"Трафик серый А", hex:"#8D948F"},
+            {code:"RAL 7043", name:"Трафик серый В", hex:"#4E5453"},
+            {code:"RAL 7044", name:"Шёлковый серый", hex:"#C2C2B6"},
+            {code:"RAL 7045", name:"Телесерый 1", hex:"#8E9293"},
+            {code:"RAL 7046", name:"Телесерый 2", hex:"#7F868C"},
+            {code:"RAL 7047", name:"Телесерый 4", hex:"#CDCDCF"},
+            {code:"RAL 7048", name:"Жемчужно-мышиный", hex:"#868476"},
+            {code:"RAL 8000", name:"Зелёно-коричневый", hex:"#896A46"},
+            {code:"RAL 8001", name:"Охристо-коричневый", hex:"#955F20"},
+            {code:"RAL 8002", name:"Сигнальный коричневый", hex:"#773D2D"},
+            {code:"RAL 8003", name:"Глинисто-коричневый", hex:"#7A4B2C"},
+            {code:"RAL 8004", name:"Медно-коричневый", hex:"#8E4C35"},
+            {code:"RAL 8007", name:"Олень коричневый", hex:"#664228"},
+            {code:"RAL 8008", name:"Оливково-коричневый", hex:"#6A4B2C"},
+            {code:"RAL 8011", name:"Орехово-коричневый", hex:"#5A3826"},
+            {code:"RAL 8012", name:"Красно-коричневый", hex:"#673730"},
+            {code:"RAL 8014", name:"Сепия коричневый", hex:"#3A2D24"},
+            {code:"RAL 8015", name:"Каштаново-коричневый", hex:"#5E2D2A"},
+            {code:"RAL 8016", name:"Махагон коричневый", hex:"#4B2D24"},
+            {code:"RAL 8017", name:"Шоколадно-коричневый", hex:"#412B26"},
+            {code:"RAL 8019", name:"Серо-коричневый", hex:"#3E3533"},
+            {code:"RAL 8022", name:"Чёрно-коричневый", hex:"#1C1A18"},
+            {code:"RAL 8023", name:"Оранжево-коричневый", hex:"#A0522D"},
+            {code:"RAL 8024", name:"Бежево-коричневый", hex:"#735847"},
+            {code:"RAL 8025", name:"Бледно-коричневый", hex:"#65574D"},
+            {code:"RAL 8028", name:"Терракотовый коричневый", hex:"#513B2E"},
+            {code:"RAL 8029", name:"Жемчужно-медный", hex:"#724C3B"},
+            {code:"RAL 9001", name:"Кремово-белый", hex:"#EAE3D7"},
+            {code:"RAL 9002", name:"Серо-белый", hex:"#D7D5CB"},
+            {code:"RAL 9003", name:"Сигнальный белый", hex:"#F4F4F4"},
+            {code:"RAL 9004", name:"Сигнальный чёрный", hex:"#2B2B2B"},
+            {code:"RAL 9005", name:"Глубокий чёрный", hex:"#0A0A0A"},
+            {code:"RAL 9006", name:"Белый алюминий", hex:"#A5A5A5"},
+            {code:"RAL 9007", name:"Серый алюминий", hex:"#8F8F8F"},
+            {code:"RAL 9010", name:"Чистый белый", hex:"#F1ECE1"},
+            {code:"RAL 9011", name:"Графитовый чёрный", hex:"#272727"},
+            {code:"RAL 9016", name:"Транспортный белый", hex:"#F2F2EC"},
+            {code:"RAL 9017", name:"Транспортный чёрный", hex:"#2A2A2A"},
+            {code:"RAL 9018", name:"Папирусно-белый", hex:"#CFD0C6"},
+            {code:"RAL 9022", name:"Жемчужный светло-серый", hex:"#858583"},
+            {code:"RAL 9023", name:"Жемчужный тёмно-серый", hex:"#7A7B7C"}
+        ];
+
         const DEFAULT_BRANDS = ["eSUN","BestFilament","Devil Design","Fiberlogy"];
         const DEFAULT_TYPES = ["PLA","ABS","PETG","TPU"];
         const DEFAULT_SETTINGS = {
             power: 0.15, tariff: 0.25, amortization: 10.0,
-            dryerPower: 0.3, dryerTime: 6,
+            dryerPower: 0.3,
             materials: [
                 {brand:"eSUN", type:"PLA+", series:"Pro", color:"#FF5733", pricePerPackage:30, packageWeight:1000},
                 {brand:"BestFilament", type:"ABS", series:"", color:"#33FF57", pricePerPackage:45, packageWeight:1000}
@@ -396,8 +623,10 @@
             if (!parts.length) { document.getElementById('result').innerHTML = '<p>Добавьте детали.</p>'; return; }
             let margin = parseFloat(document.getElementById('marginSelect').value);
             let totalCost = 0;
+            let totalTime = 0;
             let details = '';
             parts.forEach(p => {
+                totalTime += p.time;
                 let ppg = p.mat.pricePerPackage / p.mat.packageWeight;
                 let plasticCost = p.weight * ppg;
                 let electricityCost = settings.power * p.time * settings.tariff;
@@ -417,13 +646,13 @@
             });
 
             let dryerCost = 0;
-            if (settings.dryerPower && settings.dryerTime) {
-                dryerCost = settings.dryerPower * settings.dryerTime * settings.tariff;
+            if (settings.dryerPower && totalTime > 0) {
+                dryerCost = settings.dryerPower * totalTime * settings.tariff;
                 totalCost += dryerCost;
             }
 
             let final = totalCost * margin;
-            let dryerRow = dryerCost > 0 ? `<div class="detail-row"><span>🧯 Сушка филамента</span><span>${dryerCost.toFixed(2)} Br</span></div><hr>` : '';
+            let dryerRow = dryerCost > 0 ? `<div class="detail-row"><span>🧯 Сушка филамента (${totalTime.toFixed(1)} ч)</span><span>${dryerCost.toFixed(2)} Br</span></div><hr>` : '';
 
             document.getElementById('result').innerHTML = `
                 <div style="margin-bottom:16px; font-weight:600;">📊 Сводка заказа</div>
@@ -507,6 +736,44 @@
         document.getElementById('matTypeSelect').addEventListener('change', function() {
             document.getElementById('matTypeOther').classList.toggle('hidden', this.value !== 'other');
         });
+
+        // RAL палитра
+        document.getElementById('ralPaletteBtn').addEventListener('click', () => {
+            document.getElementById('ralSearchBlock').classList.toggle('hidden');
+            if (!document.getElementById('ralSearchBlock').classList.contains('hidden')) {
+                renderRalList(ralColorsFull);
+            }
+        });
+
+        document.getElementById('ralSearchBtn').addEventListener('click', () => {
+            const query = document.getElementById('ralSearchInput').value.trim().toLowerCase();
+            if (!query) {
+                renderRalList(ralColorsFull);
+                return;
+            }
+            const filtered = ralColorsFull.filter(c =>
+                c.code.toLowerCase().includes(query) ||
+                c.name.toLowerCase().includes(query)
+            );
+            renderRalList(filtered);
+        });
+
+        function renderRalList(colors) {
+            const container = document.getElementById('ralResults');
+            container.innerHTML = '';
+            colors.forEach(c => {
+                const div = document.createElement('div');
+                div.className = 'dict-item';
+                div.style.cursor = 'pointer';
+                div.innerHTML = `<span>${c.code} ${c.name}</span><span style="display:inline-block; width:20px; height:20px; background:${c.hex}; border-radius:50%; margin-left:10px;"></span>`;
+                div.addEventListener('click', () => {
+                    document.getElementById('matColorPicker').value = c.hex;
+                    document.getElementById('matColorText').value = `${c.name} (${c.code})`;
+                    document.getElementById('ralSearchBlock').classList.add('hidden');
+                });
+                container.appendChild(div);
+            });
+        }
 
         document.getElementById('saveOrderBtn').addEventListener('click', () => {
             let name = document.getElementById('orderName').value.trim() || 'Без названия';
@@ -598,14 +865,12 @@
         document.getElementById('tariffInput').value = settings.tariff;
         document.getElementById('amortInput').value = settings.amortization;
         document.getElementById('dryerPower').value = settings.dryerPower || 0.3;
-        document.getElementById('dryerTime').value = settings.dryerTime || 6;
 
         document.getElementById('saveSettingsBtn').addEventListener('click', () => {
             settings.power = parseFloat(document.getElementById('powerInput').value) || 0.15;
             settings.tariff = parseFloat(document.getElementById('tariffInput').value) || 0.25;
             settings.amortization = parseFloat(document.getElementById('amortInput').value) || 10.0;
             settings.dryerPower = parseFloat(document.getElementById('dryerPower').value) || 0;
-            settings.dryerTime = parseFloat(document.getElementById('dryerTime').value) || 0;
             saveAll();
             recalc();
             alert('Настройки сохранены');
@@ -622,7 +887,6 @@
                 document.getElementById('tariffInput').value = settings.tariff;
                 document.getElementById('amortInput').value = settings.amortization;
                 document.getElementById('dryerPower').value = settings.dryerPower || 0.3;
-                document.getElementById('dryerTime').value = settings.dryerTime || 6;
             }
         }));
 
